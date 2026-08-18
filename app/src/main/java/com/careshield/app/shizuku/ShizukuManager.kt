@@ -11,7 +11,7 @@ import rikka.shizuku.Shizuku
 object ShizukuManager {
 
     val AUTHORITY = "rikka.shizuku"
-    private const val CODE_PERMISSION = 1
+    private const val CODE_PERMISSION = 1001
     @Volatile private var bound = false
 
     fun isAvailable(): Boolean =
@@ -29,9 +29,8 @@ object ShizukuManager {
     }
 
     fun requestPermission() {
-        if (Shizuku.isPreV11() || !Shizuku.checkSelfPermission()) {
-            runCatching { Shizuku.requestPermission(CODE_PERMISSION) }
-        }
+        // 请求 Shizuku 权限（V13 支持，需要 Activity 上下文配合 result listener）
+        runCatching { Shizuku.requestPermission(CODE_PERMISSION) }
     }
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
