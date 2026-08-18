@@ -163,11 +163,6 @@ private fun openDevSettings(context: Context) {
 }
 
 private fun openWirelessDebug(context: Context) {
-    runCatching {
-        val action = Settings.ACTION_WIRELESS_DEBUGGING_SETTINGS
-        context.startActivity(Intent(action))
-    }.onFailure {
-        // 无无线调试时回退到开发者选项
-        runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
-    }
+    // Android 无独立"无线调试"跳转常量，回退到开发者选项（无线调试开关在其中）
+    runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
 }

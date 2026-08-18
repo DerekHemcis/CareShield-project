@@ -230,7 +230,7 @@ private fun UsageGuidePage(onBack: () -> Unit) {
         Spacer(Modifier.height(8.dp))
 
         // 无障碍（必须）
-        UsageSection("① 开启无障碍（必须）", Modifier.clickable {
+        UsageSection("① 开启无障碍（必须）", onClick = {
             runCatching { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
         }) {
             Text("设置 → 无障碍 → 已安装的服务 → 开启「亲安盾守护服务」", fontSize = 13.sp)
