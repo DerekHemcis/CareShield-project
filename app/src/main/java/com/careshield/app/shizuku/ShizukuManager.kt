@@ -2,9 +2,7 @@ package com.careshield.app.shizuku
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.IBinder
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuProvider
 
 /**
  * Shizuku 集成管理：检测运行状态、降级判断、一键引导开启。
@@ -15,13 +13,13 @@ object ShizukuManager {
     @Volatile private var bound = false
 
     fun isAvailable(): Boolean =
-        Shizuku.pingBinder()
+        try { Shizuku.pingBinder() } catch (e: Throwable) { false }
 
     fun bind(context: Context) {
         if (bound) return
         try {
             Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
-            Shizuku.bindRequestService(context)
+            Shizuku.bind(context)
             bound = true
         } catch (e: Throwable) { bound = false }
     }
@@ -33,12 +31,10 @@ object ShizukuManager {
     fun getUid(): Int = if (isAvailable()) Shizuku.getUid() else -1
 
     /** 尝试屏蔽包安装（需要 Shizuku + 权限）— 拦截流氓软件 */
-    fun blockPackageInstall(context: Context, packageName: String): Boolean {
+    fun blockPackageInstall(packageName: String): Boolean {
         if (!isAvailable()) return false
         return try {
-            // 通过 pm 禁用指定应用（请用 Shizuku 权限执行 shell）
-            execShell("pm disable-user --user 0 $packageName")
-            true
+            execShell("pm disable-user --user 0 $packageName") != null
         } catch (e: Throwable) { false }
     }
 
@@ -53,7 +49,7 @@ object ShizukuManager {
 
     fun isServiceInstalled(context: Context): Boolean =
         try {
-            context.packageManager.getPackageInfo(ShizukuProvider.AUTHORITY, 0)
+            context.packageManager.getPackageInfo("moe.shizuku.privileged.api", 0)
             true
         } catch (e: PackageManager.NameNotFoundException) { false }
 }

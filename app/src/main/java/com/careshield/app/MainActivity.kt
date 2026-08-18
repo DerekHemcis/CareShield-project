@@ -18,6 +18,7 @@ import com.careshield.app.data.SettingsRepo
 import com.careshield.app.ui.CareShieldTheme
 import com.careshield.app.ui.nav.MainShell
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

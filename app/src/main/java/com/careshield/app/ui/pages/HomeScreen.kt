@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -76,11 +77,11 @@ fun HomeScreen(
                 Text("已为家人拦截广告与流氓软件打扰", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth()) {
-                    StatCell("12", "今日拦截广告")
+                    StatCell(Modifier.weight(1f), "12", "今日拦截广告")
                     Spacer(Modifier.width(10.dp))
-                    StatCell("3", "误触弹窗拦截")
+                    StatCell(Modifier.weight(1f), "3", "误触弹窗拦截")
                     Spacer(Modifier.width(10.dp))
-                    StatCell("0", "防装软件")
+                    StatCell(Modifier.weight(1f), "0", "防装软件")
                 }
             }
         }
@@ -93,7 +94,7 @@ fun HomeScreen(
         }
 
         // 功能开关
-        SectionTitle("功能")
+        HomeSectionTitle("功能")
         FeatureSwitch("自动跳过广告", "开屏广告 · 贴片广告自动点「跳过」", "func_skip_ad", repo)
         FeatureSwitch("弹窗自动关闭", "识别「关闭/×」关闭骚扰弹窗", "func_close_pop", repo)
         FeatureSwitch("防误触下载", "拦截跳转应用商店下载页", "func_misclick", repo)
@@ -102,11 +103,10 @@ fun HomeScreen(
 }
 
 @Composable
-private fun StatCell(n: String, label: String) {
+private fun StatCell(modifier: Modifier, n: String, label: String) {
     val s = MaterialTheme.colorScheme
     Column(
-        Modifier
-            .weight(1f)
+        modifier
             .clip(RoundedCornerShape(18.dp))
             .background(s.surface.copy(alpha = if (s.background.luminance() < 0.3f) 0.6f else 0.9f))
             .padding(vertical = 14.dp),
@@ -158,7 +158,7 @@ private fun ShizukuOkCard() {
 }
 
 @Composable
-private fun SectionTitle(t: String) {
+private fun HomeSectionTitle(t: String) {
     Text(
         t, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
