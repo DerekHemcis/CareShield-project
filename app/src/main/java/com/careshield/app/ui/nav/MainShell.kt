@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -30,7 +30,7 @@ fun MainShell(
     val items = listOf(
         NavItem("功能", Icons.Filled.Home, "🏠"),
         NavItem("设置", Icons.Filled.Settings, "⚙️"),
-        NavItem("日志", Icons.Filled.List, "📋"),
+        NavItem("日志", Icons.AutoMirrored.Filled.List, "📋"),
         NavItem("关于", Icons.Filled.Info, "ℹ️"),
     )
 
