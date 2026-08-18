@@ -54,7 +54,7 @@ fun AboutScreen() {
         }
         Spacer(Modifier.height(16.dp))
 
-        SectionTitle("更多")
+        AboutSectionTitle("更多")
         // 检查更新（进入更新页，显示版本 + 更新内容）
         AboutRow("检查更新") { showUpdatePage = true }
         // 备份（单按钮 → 弹导入/导出选项）
@@ -130,7 +130,7 @@ private const val UPDATE_TEXT =
     "• 界面：KernelSU 风格与液态玻璃深化"
 
 @Composable
-private fun SectionTitle(t: String) {
+private fun AboutSectionTitle(t: String) {
     Text(t, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
 }
 
