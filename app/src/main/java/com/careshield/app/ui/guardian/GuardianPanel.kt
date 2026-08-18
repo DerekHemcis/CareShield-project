@@ -68,9 +68,13 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
             GuardianNavRow("修改监护人密码", "默认 1234，可自定义", { showChangePass = true })
             // Shizuku 设置
             GuardianNavRow("Shizuku 设置", "连接增强 · 防流氓软件安装", {
-                runCatching {
-                    context.startActivity(Intent("moe.shizuku.manager.intent.action.API_V2"))
-                }.onFailure { toast(context, "未安装 Shizuku 管理器") }
+                val pkg = "moe.shizuku.privileged.api"
+                val launch = context.packageManager.getLaunchIntentForPackage(pkg)
+                if (launch != null) {
+                    runCatching { context.startActivity(launch) }
+                } else {
+                    toast(context, "未安装 Shizuku 管理器")
+                }
             })
             Spacer(Modifier.height(24.dp))
         }

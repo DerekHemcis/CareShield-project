@@ -21,17 +21,10 @@ class AdBlockerService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val now = System.currentTimeMillis()
-        if (now - cooldown < 400) return
+        if (now - cooldown < 150) return
         cooldown = now
 
-        // 【诊断探针】收到事件即打印，用于确认服务在监听及识别链路
-        val eventTypeName = when (event.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE_CHANGED"
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT_CHANGED"
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "WINDOWS_CHANGED"
-            else -> "event#${event.eventType}"
-        }
-        android.util.Log.i("CareShield", "PROBE event=$eventTypeName pkg=${event.packageName} cls=${event.className}")
+        // 【已移除诊断探针：达到验证目的，且会刷屏影响性能】
 
         val repo = SettingsRepo(this)
         val skipAd = repo.isEnabledSync("func_skip_ad")
@@ -108,15 +101,13 @@ class AdBlockerService : AccessibilityService() {
 
         if (score >= SCORE_STRONG) return score
 
-        // 高置信：含"跳过/Skip"（开屏广告常见，含倒计时如 1s跳过；不依赖广告上下文）
-        // 不要求节点自身 clickable：匹配后统一找可点击祖先
+        // 高置信：含"跳过/Skip"（开屏广告常见，含倒计时如 1s跳过 3跳过 跳过 10；不依赖广告上下文）
+        // 不要求节点自身 clickable：匹配后统一找可点击祖先；与倒计时数字绑定，避免误杀日历/时间
         if (skipAd && (combined.contains("跳过") || combined.contains("Skip"))) {
             score = maxOf(score, SCORE_MID)
         }
-
-        // 倒计时跳过：屏幕角落小按钮，文本含数字(1~60)即视为开屏广告计时器
-        // 覆盖各种位置形态：纯数字"10"、跳过在前"跳过 10"、跳过在后"3跳过"、带单位"13s/剩余5秒"
-        if (skipAd && isCornerNode(node) && text.contains(Regex("[1-9][0-9]?|秒|s"))) {
+        // 倒计时+跳过绑定：数字与"跳过"在同一按钮（如 "跳过 10" "3s跳过" "跳过广告 5 秒"）
+        if (skipAd && COUNTDOWN_SKIPregex.matches(text.trim())) {
             score = maxOf(score, SCORE_MID)
         }
 
@@ -245,9 +236,9 @@ class AdBlockerService : AccessibilityService() {
 
         private val AD_LABEL = listOf("广告", "推广", "Sponsored", "Ad")
 
-        // 倒计时跳过按钮文本：如 "13" "13s" "3s跳过" "剩余 5 秒" "5 秒后"
-        private val COUNTDOWN_ANYRegex = Regex(
-            "(^[1-9]|^[1-5][0-9])(s|秒)?(跳过|后)?$|剩余.{0,2}[1-9][0-9]?.*秒|跳过后.{0,4}[1-9][0-9]?.*秒|广告.{0,3}[1-9][0-9]?.*秒"
+        // 倒计时+跳过 绑定正则：数字与"跳过"同节点（跳过在前/在后），避免裸数字误杀
+        private val COUNTDOWN_SKIPregex = Regex(
+            "跳过.{0,4}[0-9]+|[0-9]+.{0,4}跳过"
         )
 
         // 置信度阈值
