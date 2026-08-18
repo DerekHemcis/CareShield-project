@@ -80,12 +80,14 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         Card(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
         ) {
             Row(Modifier.fillMaxWidth().clickable { showResetConfirm = true }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("恢复默认设置", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
-                Spacer(Modifier.weight(1f))
-                Text("重置", fontSize = 13.sp, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text("↺", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(10.dp))
+                Text("恢复默认设置", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("重置", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
             }
         }
         if (showResetConfirm) {

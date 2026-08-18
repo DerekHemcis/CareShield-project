@@ -98,6 +98,11 @@ fun HomeScreen(
             }
         }
 
+        // 无障碍服务引导卡（未开启时显示，带"去开启"按钮）
+        if (!a11yOn) {
+            AccessibilityGuideCard(onOpenAccessibility)
+        }
+
         // Shizuku 卡片（0=未连接 1=请求中 2=已连接）
         when (shizukuState) {
             2 -> ShizukuOkCard()
@@ -131,8 +136,30 @@ private fun StatCell(modifier: Modifier, n: String, label: String) {
 }
 
 @Composable
-private fun ShizukuWarnCard(onOpenShizuku: () -> Unit) {
+private fun AccessibilityGuideCard(onOpen: () -> Unit) {
+    val s = MaterialTheme.colorScheme
     Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = s.secondaryContainer)
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("♿", fontSize = 26.sp)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("开启无障碍服务", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = s.onSecondaryContainer)
+                Spacer(Modifier.height(2.dp))
+                Text("需要在系统设置中开启「亲安盾守护服务」才能自动拦截广告", fontSize = 11.sp, color = s.onSecondaryContainer.copy(alpha = 0.7f))
+            }
+            Button(onClick = onOpen, colors = ButtonDefaults.buttonColors(containerColor = s.primary)) {
+                Text("去开启", color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShizukuWarnCard(onOpenShizuku: () -> Unit) {    Card(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
