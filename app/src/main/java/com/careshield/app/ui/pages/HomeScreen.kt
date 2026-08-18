@@ -2,6 +2,9 @@ package com.careshield.app.ui.pages
 
 import android.content.Context
 import android.provider.Settings
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.ComponentName
+import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.accessibility.AdBlockerService
 import com.careshield.app.shizuku.ShizukuManager
 
 @Composable
@@ -39,6 +43,12 @@ fun HomeScreen(
         a11yOn = isAccessibilityEnabled(context)
         // 读取真实拦截统计
         counts = repo.getInterceptCounts()
+        // 定期刷新无障碍服务状态，保持顶部卡片实时同步
+        while (true) {
+            val newA11y = isAccessibilityEnabled(context)
+            if (newA11y != a11yOn) a11yOn = newA11y
+            kotlinx.coroutines.delay(2000)
+        }
     }
 
     val primary = MaterialTheme.colorScheme.primary
@@ -217,12 +227,11 @@ private fun FeatureSwitch(title: String, desc: String, prefKey: String, repo: Se
 }
 
 private fun isAccessibilityEnabled(context: Context): Boolean {
-    val expected = "com.careshield.app/com.careshield.app.accessibility.AdBlockerService"
-    val resolved = (expected)
-    val enabledIds = Settings.Secure.getString(
-        context.contentResolver,
-        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-    ) ?: return false
-    // 组件名可能带 :0 后缀
-    return enabledIds.split(':').any { it.startsWith(resolved.substringBeforeLast('.') + "." ) || it == expected }
+    return try {
+        val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val expected = ComponentName(context, AdBlockerService::class.java)
+        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        enabled.any { it.resolveInfo.serviceInfo.packageName == expected.packageName &&
+                     it.resolveInfo.serviceInfo.name == expected.className }
+    } catch (_: Exception) { false }
 }
