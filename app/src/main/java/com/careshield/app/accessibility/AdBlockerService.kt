@@ -39,36 +39,96 @@ class AdBlockerService : AccessibilityService() {
 
     private fun handleAd(root: AccessibilityNodeInfo, skipAd: Boolean, closePop: Boolean, swipeAd: Boolean) {
         val pkg = packageName ?: return
-        // 白名单内的应用不拦截（老人常用）
         val repo = SettingsRepo(this)
         if (repo.isWhitelisted(pkg)) return
 
-        // ---- 策略1: 文字/倒计时/描述识别，点击跳过或关闭 ----
+        // 判断当前界面是否存在"广告上下文"（界面上有 广告/Ad/Sponsored 标签）
+        val hasAdContext = if (skipAd || closePop) detectAdContext(root) else false
+
+        // ---- 策略1: 智能置信度评分，点击广告按钮 ----
         if (skipAd || closePop) {
             val nodes = mutableListOf<AccessibilityNodeInfo>()
             collectAll(root, nodes)
             for (node in nodes) {
-                val text = (node.text?.toString() ?: "")
-                val desc = (node.contentDescription?.toString() ?: "")
+                val text = node.text?.toString() ?: ""
+                val desc = node.contentDescription?.toString() ?: ""
                 val combined = "$text $desc"
                 if (combined.isBlank()) continue
+                if (node.className?.toString()?.contains("EditText") == true) continue
 
-                val isSkip = skipAd && (SKIP_ANY.any { combined.contains(it) } || AD_LABEL.any { combined.contains(it) })
-                val isClose = closePop && CLOSE_ANY.any { combined.contains(it, ignoreCase = true) }
-                if (isSkip || isClose) {
+                val score = scoreNode(combined, text, node, hasAdContext, skipAd, closePop)
+                if (score >= SCORE_CLICK) {
                     val target = findClickableAncestor(node) ?: node
-                    val source = if (isSkip) "广告" else "弹窗"
+                    val source = if (score >= SCORE_STRONG) "广告" else if (skipAd) "广告" else "弹窗"
                     clickIfSafe(target, repo, source)
                     return
                 }
             }
         }
 
-        // ---- 策略2: 信息流"广告"标签 → 上滑跳过（抖音/快手信息流广告） ----
+        // ---- 策略2: 信息流"广告"标签 → 上滑跳过 ----
         if (swipeAd && AD_LABEL.any { hasTextNode(root, it) }) {
-            // 如果检测到"广告"标签节点，执行一次上滑手势
             performSwipeUp()
         }
+    }
+
+    /**
+     * 置信度评分：返回分数越高越可能是真广告按钮。
+     * 强证据(>=SCORE_STRONG)：明确广告语义词
+     * 中证据(>=SCORE_MID)：广告上下文下的关闭/跳过
+     * 弱证据：仅 x/取消 之类，必须同时有广告上下文 + 在角落，否则不打分
+     */
+    private fun scoreNode(combined: String, text: String, node: AccessibilityNodeInfo,
+                          adContext: Boolean, skipAd: Boolean, closePop: Boolean): Int {
+        var score = 0
+        // 强：明确"跳过广告/关闭广告/点击跳过"
+        if (skipAd && STRONG_SKIP.any { combined.contains(it) }) score = maxOf(score, SCORE_STRONG)
+        if (closePop && STRONG_CLOSE.any { combined.contains(it) }) score = maxOf(score, SCORE_STRONG)
+
+        if (score >= SCORE_STRONG) return score
+
+        // 中：广告上下文存在时的通用跳过/关闭
+        if (skipAd && adContext && MID_SKIP.any { combined.contains(it) }) score = maxOf(score, SCORE_MID)
+        if (closePop && adContext && MID_CLOSE.any { combined.contains(it) }) score = maxOf(score, SCORE_MID)
+        if (score >= SCORE_MID) return score
+
+        // 弱：裸 x/×/知道了（无明确广告语义）
+        // 必须：有广告上下文 + 节点在屏幕角落 + 非页面级关闭
+        if (closePop && adContext && WEAK_CLOSE.any { combined.trim() == it || combined.contains(it) }) {
+            if (node.isClickable && isCornerNode(node)) {
+                score = maxOf(score, SCORE_WEAK)
+            }
+        }
+        return score
+    }
+
+    /** 检测界面是否有"广告/Ad/Sponsored"标签（作为广告上下文） */
+    private fun detectAdContext(root: AccessibilityNodeInfo): Boolean {
+        val nodes = mutableListOf<AccessibilityNodeInfo>()
+        collectAll(root, nodes)
+        return nodes.any { node ->
+            val t = node.text?.toString() ?: ""
+            node.isClickable == false && (t == "广告" || t == "推广" || t == "Ad" || t == "广告" ||
+                AD_LABEL.any { t.trim() == it })
+        }
+    }
+
+    /** 节点是否在屏幕角落（右上/左上小区域，通常是广告关闭按钮） */
+    private fun isCornerNode(node: AccessibilityNodeInfo): Boolean {
+        return try {
+            val r = android.graphics.Rect()
+            node.getBoundsInScreen(r)
+            val screenW = resources.displayMetrics.widthPixels
+            val screenH = resources.displayMetrics.heightPixels
+            // 顶部 22% 内
+            if (r.top >= screenH * 0.22f) return false
+            // 靠近右边缘（右 25%）或左边缘（左 25%）
+            val nearRight = r.left > screenW * 0.75f
+            val nearLeft = r.right < screenW * 0.25f
+            // 且按钮本身不大（小关闭按钮）
+            val small = r.width() <= screenW * 0.3f && r.height() <= screenH * 0.12f
+            (nearRight || nearLeft) && small
+        } catch (_: Exception) { false }
     }
 
     private fun hasTextNode(root: AccessibilityNodeInfo, keyword: String): Boolean {
@@ -136,10 +196,23 @@ class AdBlockerService : AccessibilityService() {
     @Volatile private var lastSwipeAd = 0L
 
     companion object {
-        private val SKIP_ANY = listOf("跳过", "点击跳过", "跳過", "Skip", "跳过广告", "广告可跳过", "播放后跳过")
-        private val CLOSE_ANY = listOf("关闭", "关掉", "知道了", "取消", "关闭广告", "关闭弹窗",
-            "x", "×", "✕", "✖", "Close", "Dismiss", "Got it", "Not now", "知道了")
-        private val COUNTDOWN = listOf("秒", "后跳过", "倒计时", "s 后")
+        // 强证据：明确广告语义，直接拦截
+        private val STRONG_SKIP = listOf("跳过广告", "点击跳过广告", "广告可跳过", "播放后跳过")
+        private val STRONG_CLOSE = listOf("关闭广告", "关闭弹窗", "关闭广告悬浮窗")
+
+        // 中证据：有广告上下文(界面有"广告"标签)时才拦
+        private val MID_SKIP = listOf("跳过", "Skip", "点击跳过", "跳過")
+        private val MID_CLOSE = listOf("关闭", "关掉", "×", "✕", "✖", "x", "Close", "Dismiss", "Got it", "Not now", "取消", "知道了")
+
+        // 弱证据：裸关闭词，必须 广告上下文 + 角落 + 可点 才拦（防误杀）
+        private val WEAK_CLOSE = listOf("×", "✕", "x", "✖", "关闭", "知道了")
+
         private val AD_LABEL = listOf("广告", "推广", "Sponsored", "Ad")
+
+        // 置信度阈值
+        private const val SCORE_WEAK = 40
+        private const val SCORE_MID = 70
+        private const val SCORE_STRONG = 100
+        private const val SCORE_CLICK = 40 // 达到此分数即可点击
     }
 }
