@@ -26,18 +26,17 @@ import com.careshield.app.shizuku.ShizukuManager
 @Composable
 fun HomeScreen(
     onOpenAccessibility: () -> Unit,
-    onOpenShizuku: () -> Unit
+    onOpenShizuku: () -> Unit,
+    shizukuState: Int = 0   // 0=未连接 1=请求中 2=已连接
 ) {
     val context = LocalContext.current
     val repo = SettingsRepo(context)
 
     var a11yOn by remember { mutableStateOf(isAccessibilityEnabled(context)) }
-    var shizukuOn by remember { mutableIntStateOf(0) } // 0 init
     var counts by remember { mutableStateOf(IntArray(3)) } // [广告, 弹窗, 防装]
 
     LaunchedEffect(Unit) {
         a11yOn = isAccessibilityEnabled(context)
-        shizukuOn = if (ShizukuManager.isEnhanceReady()) 1 else 0
         // 读取真实拦截统计
         counts = repo.getInterceptCounts()
     }
@@ -89,11 +88,11 @@ fun HomeScreen(
             }
         }
 
-        // Shizuku 卡片
-        if (shizukuOn == 1) {
-            ShizukuOkCard()
-        } else {
-            ShizukuWarnCard(onOpenShizuku)
+        // Shizuku 卡片（0=未连接 1=请求中 2=已连接）
+        when (shizukuState) {
+            2 -> ShizukuOkCard()
+            1 -> ShizukuConnectingCard()
+            else -> ShizukuWarnCard(onOpenShizuku)
         }
 
         // 功能开关
@@ -136,7 +135,25 @@ private fun ShizukuWarnCard(onOpenShizuku: () -> Unit) {
                 Text("高级拦截能力未开启，防流氓软件功能已降级", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Button(onClick = onOpenShizuku, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE28A2A))) {
-                Text("去开启", fontWeight = FontWeight.Bold, color = Color.White)
+                Text("去连接", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShizukuConnectingCard() {
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0x33219C6D)) // 半透明绿
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("⏳", fontSize = 22.sp)
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text("Shizuku 连接中", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("请在系统弹窗中允许授权", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -147,14 +164,14 @@ private fun ShizukuOkCard() {
     Card(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2E7D5B)) // 正确绿
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("✅", fontSize = 22.sp)
             Spacer(Modifier.width(12.dp))
             Column {
-                Text("Shizuku 已连接", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("高级拦截能力正常 · 防流氓软件已启用", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Shizuku 已连接", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
+                Text("高级拦截能力正常 · 防流氓软件已启用", fontSize = 11.sp, color = Color(0xFFC9E8DA))
             }
         }
     }

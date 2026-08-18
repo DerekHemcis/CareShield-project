@@ -23,7 +23,8 @@ fun MainShell(
     theme: Int,
     onThemeChange: (Int) -> Unit,
     onOpenAccessibility: () -> Unit,
-    onOpenShizuku: () -> Unit
+    onOpenShizuku: () -> Unit,
+    shizukuState: Int = 0
 ) {
     var tab by remember { mutableStateOf(0) }
 
@@ -37,7 +38,11 @@ fun MainShell(
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxSize()) {
             when (tab) {
-                0 -> HomeScreen(onOpenAccessibility = onOpenAccessibility, onOpenShizuku = onOpenShizuku)
+                0 -> HomeScreen(
+                    onOpenAccessibility = onOpenAccessibility,
+                    onOpenShizuku = onOpenShizuku,
+                    shizukuState = shizukuState
+                )
                 1 -> SettingsScreen(theme = theme, onThemeChange = onThemeChange)
                 2 -> LogScreen()
                 3 -> AboutScreen()
