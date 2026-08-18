@@ -13,21 +13,15 @@ object ShizukuManager {
     const val CODE_PERMISSION = 1001
     @Volatile private var bound = false
 
-    /** 权限请求结果监听：由各 Activity 注册，权限回执时回调 */
-    @Suppress("DEPRECATION")
-    interface PermissionResultListener {
-        fun onRequestPermissionResult(requestCode: Int, granted: Boolean)
-    }
-
-    @Volatile private var listener: PermissionResultListener? = null
+    @Volatile private var listener: (Int, Boolean) -> Unit = { _, _ -> }
 
     private val permissionResultListener = Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
         val granted = grantResult == PackageManager.PERMISSION_GRANTED
-        listener?.onRequestPermissionResult(requestCode, granted)
+        listener(requestCode, granted)
     }
 
-    /** 设置权限结果回调（在 Activity onCreate 注册） */
-    fun setPermissionResultListener(l: PermissionResultListener?) {
+    /** 设置权限结果回调（在 Activity onCreate 注册），签名 (requestCode, granted) */
+    fun setPermissionResultListener(l: (Int, Boolean) -> Unit) {
         listener = l
         runCatching { Shizuku.addRequestPermissionResultListener(permissionResultListener) }
     }
