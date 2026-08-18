@@ -21,7 +21,7 @@ class AdBlockerService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val now = System.currentTimeMillis()
-        if (now - cooldown < 150) return
+        if (now - cooldown < 100) return
         cooldown = now
 
         // 【已移除诊断探针：达到验证目的，且会刷屏影响性能】
@@ -83,6 +83,40 @@ class AdBlockerService : AccessibilityService() {
         // ---- 策略2: 信息流"广告"标签 → 上滑跳过 ----
         if (swipeAd && AD_LABEL.any { hasTextNode(root, it) }) {
             performSwipeUp()
+        }
+
+        // ---- 策略3: 防误触下载 ----
+        val blockDownload = repo.isEnabledSync("func_misclick")
+        if (blockDownload) {
+            blockMisclickDownload(root)
+        }
+    }
+
+    /**
+     * 防误触下载：检测到"下载/安装/应用商店/立即下载"等误触下载界面时，自动返回退回。
+     * 识别到下载/安装语义的按钮或页面，执行返回键，防止老人误触跳转下载。
+     */
+    private fun blockMisclickDownload(root: AccessibilityNodeInfo) {
+        val nodes = mutableListOf<AccessibilityNodeInfo>()
+        collectAll(root, nodes)
+        // 检测页面上是否有下载/安装/商店特征文本
+        var hitDownload = false
+        for (node in nodes) {
+            val text = (node.text?.toString() ?: "") + (node.contentDescription?.toString() ?: "")
+            if (text.isBlank()) continue
+            // 下载/安装/商店特征（避免"下载中""已完成"这类状态词触发）
+            if (DOWNLOAD_ANY.any { text.contains(it) } && !STATUS_ANY.any { text.contains(it) }) {
+                hitDownload = true
+            }
+        }
+        if (hitDownload) {
+            // 节流防误返回
+            if (System.currentTimeMillis() - lastMisclick > 1200) {
+                lastMisclick = System.currentTimeMillis()
+                performGlobalAction(GLOBAL_ACTION_BACK)
+                // 记录
+                Thread { kotlinx.coroutines.runBlocking { SettingsRepo(this@AdBlockerService).logIntercept("防误触", "拦截下载页面") } }.start()
+            }
         }
     }
 
@@ -230,6 +264,7 @@ class AdBlockerService : AccessibilityService() {
 
     @Volatile private var lastSwipeAd = 0L
     @Volatile private var lastDiagDump = 0L
+    @Volatile private var lastMisclick = 0L
 
     companion object {
         // 强证据：明确广告语义，直接拦截
@@ -252,6 +287,14 @@ class AdBlockerService : AccessibilityService() {
         private val COUNTDOWN_SKIPregex = Regex(
             "跳过.{0,4}[0-9]+|[0-9]+.{0,4}跳过"
         )
+
+        // 防误触下载：下载/安装/商店特征词
+        private val DOWNLOAD_ANY = listOf(
+            "立即下载", "马上安装", "去下载", "下载安装", "安装应用", "前往应用商店",
+            "打开应用商店", "查看详情去下载", "免费下载", "抢先下载", "极速下载"
+        )
+        // 状态词（不应触发返回）
+        private val STATUS_ANY = listOf("下载中", "下载完成", "已下载", "安装完成", "0%", "100%", "%")
 
         // 置信度阈值
         private const val SCORE_WEAK = 40

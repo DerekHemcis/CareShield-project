@@ -2,6 +2,8 @@ package com.careshield.app.ui.pages
 
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,9 +27,14 @@ fun AboutScreen() {
     val context = LocalContext.current
     var showBackupDialog by remember { mutableStateOf(false) }
     var showUpdatePage by remember { mutableStateOf(false) }
+    var showUsagePage by remember { mutableStateOf(false) }
 
     if (showUpdatePage) {
         AboutUpdatePage(onBack = { showUpdatePage = false })
+        return
+    }
+    if (showUsagePage) {
+        UsageGuidePage(onBack = { showUsagePage = false })
         return
     }
 
@@ -40,7 +48,25 @@ fun AboutScreen() {
         Text("CareShield 亲安盾", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
         Text("守护家人安全上网", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
-        Text("版本 1.0.3", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // 使用方法入口 ⓘ
+        Card(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Row(Modifier.fillMaxWidth().clickable { showUsagePage = true }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(26.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50)), contentAlignment = Alignment.Center) {
+                    Text("?", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("使用方法", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text("开启守护 · Shizuku · 无障碍说明", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text("版本 1.0.4", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(24.dp))
 
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
@@ -104,7 +130,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text("CareShield 亲安盾", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text("当前版本：v1.0.3", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("当前版本：v1.0.4", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("已是最新版本", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -114,7 +140,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
         // 更新内容
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
-                Text("v1.0.3 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("v1.0.4 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Text(UPDATE_TEXT, fontSize = 13.sp, lineHeight = 20.sp)
             }
@@ -188,4 +214,59 @@ private fun importBackup(context: Context) {
 
 private fun toast(context: Context, msg: String) {
     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+}
+
+/** 使用方法页：方案 A（root）/ 方案 B（老人机无 root）+ 无障碍开启说明 */
+@Composable
+private fun UsageGuidePage(onBack: () -> Unit) {
+    val context = LocalContext.current
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ 返回") }
+            Text("使用方法", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // 无障碍（必须）
+        UsageSection("① 开启无障碍（必须）", Modifier.clickable {
+            runCatching { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        }) {
+            Text("设置 → 无障碍 → 已安装的服务 → 开启「亲安盾守护服务」", fontSize = 13.sp)
+            Text("开启后广告自动拦截才生效", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+
+        // 方案 B（老人机无 root）
+        UsageSection("② 开启 Shizuku 增强") {
+            Text("方案B（无 Root 老人机）：", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text("1. 进入设置 → 关于手机 → 连点版本号 7 次，开启开发者模式", fontSize = 12.sp)
+            Text("2. 开发者选项 → 开启「无线调试」", fontSize = 12.sp)
+            Text("3. 用「使用配对码配对」+ 电脑 adb 配对一次", fontSize = 12.sp)
+            Text("4. 之后到 更多 → 使用方法 → Shizuku 引导 里可图形化协助", fontSize = 12.sp)
+        }
+
+        // 方案 A（root 手机）
+        UsageSection("③ 方案A（Root 手机）：Shizuku root 自启") {
+            Text("已 Root（如 KernelSU/Magisk）：在 Shizuku 中选择「通过Root启动」，开机自动运行，无需无线调试", fontSize = 12.sp)
+        }
+
+        // 备份
+        UsageSection("④ 换设备沿用设置") {
+            Text("关于 → 备份 → 导出 JSON；新设备导入即可", fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun UsageSection(title: String, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
+    Card(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        Column(
+            Modifier.padding(14.dp).then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+        ) {
+            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(6.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) { content() }
+        }
+    }
 }

@@ -33,9 +33,11 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
     // 二级页状态
     var showWhitelist by remember { mutableStateOf(false) }
     var showChangePass by remember { mutableStateOf(false) }
+    var showShizukuGuide by remember { mutableStateOf(false) }
 
     if (showWhitelist) { WhitelistScreen(onBack = { showWhitelist = false }); return }
     if (showChangePass) { ChangePassScreen(onBack = { showChangePass = false }); return }
+    if (showShizukuGuide) { com.careshield.app.ui.shizuku.ShizukuGuideScreen(onBack = { showShizukuGuide = false }); return }
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -66,16 +68,8 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
             GuardianNavRow("白名单应用管理", "选择允许老人使用的应用", { showWhitelist = true })
             // 修改监护人密码
             GuardianNavRow("修改监护人密码", "默认 1234，可自定义", { showChangePass = true })
-            // Shizuku 设置
-            GuardianNavRow("Shizuku 设置", "连接增强 · 防流氓软件安装", {
-                val pkg = "moe.shizuku.privileged.api"
-                val launch = context.packageManager.getLaunchIntentForPackage(pkg)
-                if (launch != null) {
-                    runCatching { context.startActivity(launch) }
-                } else {
-                    toast(context, "未安装 Shizuku 管理器")
-                }
-            })
+            // Shizuku 设置（打开图形引导向导）
+            GuardianNavRow("Shizuku 设置", "引导开启 · 图形化步骤", { showShizukuGuide = true })
             Spacer(Modifier.height(24.dp))
         }
     }
