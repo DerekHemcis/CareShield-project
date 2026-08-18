@@ -43,6 +43,14 @@ class AdBlockerService : AccessibilityService() {
         val pkg = packageName ?: return
         val repo = SettingsRepo(this)
 
+        // 单机/离线/工具类应用基本无广告：跳过拦截，避免误杀（如计算器、相册、日历、输入法）
+        if (isNoAdApp(pkg)) return
+        // 微信本体：广告较少，仅保留"跳过"级拦截，不做激进弹窗/箭头处理
+        val isWeChat = pkg == "com.tencent.mm"
+
+        // 白名单保护模式：开启时，仅"网页拦截"仍扫；否则白名单应用直接豁免
+        val isWhitelistedApp = repo.isWhitelisted(pkg)
+
         val whitelistMode = repo.isEnabledSync("whitelist_mode")
         val blockWeb = repo.isEnabledSync("func_block_web")
 
@@ -69,6 +77,11 @@ class AdBlockerService : AccessibilityService() {
                 val combined = "$text $desc"
                 if (combined.isBlank()) continue
                 if (node.className?.toString()?.contains("EditText") == true) continue
+
+                // 关键：排除"返回/箭头/上一页"类节点，防误点返回导致界面回退
+                if (BACK_ANY.any { text.contains(it) } || BACK_ANY.any { desc.contains(it, ignoreCase = true) }) {
+                    continue
+                }
 
                 val score = scoreNode(combined, text, node, hasAdContext, skipAd, closePop)
                 if (score >= SCORE_CLICK) {
@@ -198,6 +211,12 @@ class AdBlockerService : AccessibilityService() {
         }
     }
 
+    /** 单机/离线/工具类应用（无广告，跳过拦截避免误杀） */
+    private fun isNoAdApp(pkg: String): Boolean {
+        return NO_AD_PKGS.any { pkg.startsWith(it) }
+    }
+
+    // 单机/离线/工具类判断引用 NO_AD_PKGS（见文件末尾 companion）
     private fun performSwipeUp() {
         if (System.currentTimeMillis() - lastSwipeAd < 1500) return
         lastSwipeAd = System.currentTimeMillis()
@@ -276,12 +295,25 @@ class AdBlockerService : AccessibilityService() {
 
         // 中证据：有广告上下文(界面有"广告"标签)时才拦
         private val MID_SKIP = listOf("跳过", "Skip", "点击跳过", "跳過")
-        private val MID_CLOSE = listOf("关闭", "关掉", "×", "✕", "✖", "x", "Close", "Dismiss", "Got it", "Not now", "取消", "知道了")
+        private val MID_CLOSE = listOf("关闭", "关掉", "关闭广告", "Close", "Dismiss", "Got it", "Not now", "取消")
 
-        // 弱证据：裸关闭词，必须 广告上下文 + 角落 + 可点 才拦（防误杀）
-        private val WEAK_CLOSE = listOf("×", "✕", "x", "✖", "关闭", "知道了")
+        // 弱证据：裸关闭词——已移除裸 x/×（避免误点返回箭头/关闭标签）
+        // 仅当 广告上下文 + 角落 + 明确按钮 + 非返回 才考虑（见 scoreNode 逻辑）
+        private val WEAK_CLOSE = listOf("知道了")
+
+        // 返回/箭头/上一页 排除词（防误点导致回退）
+        private val BACK_ANY = listOf("返回", "上一页", "Back", "back", "‹", "‹‹", "←")
 
         private val AD_LABEL = listOf("广告", "推广", "Sponsored", "Ad")
+
+        // 无广告/单机/工具类应用前缀（本地工具、系统组件、输入法等，跳过拦截防误杀）
+        private val NO_AD_PKGS = listOf(
+            "com.android.calculator", "com.android.gallery", "com.android.calendar",
+            "com.android.deskclock", "com.coloros.filemanager", "com.coloros.gallery",
+            "com.sohu.inputmethod", "com.monet.inputmethod", "com.android.settings",
+            "com.android.systemui", "com.android.launcher",
+            "com.coloros.note", "com.android.documentsui", "com.android.contacts"
+        )
 
         // 倒计时+跳过 绑定正则：数字与"跳过"同节点（跳过在前/在后），避免裸数字误杀
         private val COUNTDOWN_SKIPregex = Regex(
