@@ -35,6 +35,17 @@
             android:multiprocess="false"
             android:enabled="true" />
 
+        <!-- 流氓软件安装监听 -->
+        <receiver
+            android:name=".security.RogueWatchdog"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
         <!-- FileProvider：用于分享备份的 json / 日志文件 -->
         <provider
             android:name="androidx.core.content.FileProvider"
