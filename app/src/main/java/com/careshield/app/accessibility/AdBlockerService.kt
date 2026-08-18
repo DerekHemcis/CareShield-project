@@ -48,9 +48,6 @@ class AdBlockerService : AccessibilityService() {
         // 微信本体：广告较少，仅保留"跳过"级拦截，不做激进弹窗/箭头处理
         val isWeChat = pkg == "com.tencent.mm"
 
-        // 白名单保护模式：开启时，仅"网页拦截"仍扫；否则白名单应用直接豁免
-        val isWhitelistedApp = repo.isWhitelisted(pkg)
-
         val whitelistMode = repo.isEnabledSync("whitelist_mode")
         val blockWeb = repo.isEnabledSync("func_block_web")
 
