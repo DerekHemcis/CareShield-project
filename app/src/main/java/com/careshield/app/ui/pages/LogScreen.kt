@@ -1,5 +1,7 @@
 package com.careshield.app.ui.pages
 
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,9 +34,35 @@ fun LogScreen() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
             Text("拦截日志", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Text("共 ${entries.size} 条", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        // 操作按钮：导出 / 删除
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = {
+                // 导出为文本分享
+                val text = entries.joinToString("\n") { "${it.time} ${it.source}: 拦截 ${it.action}" }
+                val send = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text.ifBlank { "暂无拦截记录" })
+                }
+                runCatching { context.startActivity(Intent.createChooser(send, "导出拦截日志")) }
+            }, modifier = Modifier.weight(1f)) {
+                Text("导出日志", fontSize = 13.sp)
+            }
+            OutlinedButton(onClick = {
+                runBlocking { repo.clearLog() }
+                entries = emptyList()
+                toast(context, "日志已清空")
+            }, modifier = Modifier.weight(1f)) {
+                Text("删除日志", fontSize = 13.sp)
+            }
         }
 
         if (entries.isEmpty()) {
@@ -84,4 +112,8 @@ private fun formatTime(ms: Long): String {
         val fmt = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
         fmt.format(Date(ms))
     } catch (_: Exception) { "--" }
+}
+
+private fun toast(context: Context, msg: String) {
+    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
 }

@@ -108,8 +108,9 @@ class AdBlockerService : AccessibilityService() {
 
         if (score >= SCORE_STRONG) return score
 
-        // 高置信：纯"跳过"作为可点击按钮（开屏广告常见，不依赖广告上下文）
-        if (skipAd && node.isClickable && STANDALONE_SKIP.any { combined.trim() == it }) {
+        // 高置信：含"跳过/Skip"（开屏广告常见，含倒计时如 1s跳过；不依赖广告上下文）
+        // 不要求节点自身 clickable：匹配后统一找可点击祖先
+        if (skipAd && (combined.contains("跳过") || combined.contains("Skip"))) {
             score = maxOf(score, SCORE_MID)
         }
 

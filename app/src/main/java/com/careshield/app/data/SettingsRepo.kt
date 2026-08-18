@@ -92,6 +92,36 @@ class SettingsRepo(private val context: Context) {
     }
     suspend fun getLog(): String = get("log", "")
 
+    /** 清空拦截日志 */
+    suspend fun clearLog() {
+        dataStore.edit { it.remove(KEY_LOG) }
+    }
+
+    /** 导出设置为 JSON（用于备份 / 换设备沿用） */
+    suspend fun exportSettings(): String {
+        val data = dataStore.data.first()
+        val sb = StringBuilder("{\n")
+        data.asMap().forEach { (key, value) ->
+            sb.append("  \"").append(key.name).append("\": \"")
+                .append(value.toString().replace("\"", "\\\"")).append("\",\n")
+        }
+        return sb.toString().trimEnd(',', ' ', '\n') + "\n}"
+    }
+
+    /** 从 JSON 备份恢复设置（用于换设备导入） */
+    suspend fun importSettings(json: String) {
+        dataStore.edit { st ->
+            val regex = Regex("\"([^\"]+)\": \"((?:\\\\.|[^\"\\\\])*)\"")
+            regex.findAll(json).forEach { m ->
+                try {
+                    val k = m.groupValues[1]
+                    val v = m.groupValues[2].replace("\\\"", "\"")
+                    st[stringPreferencesKey(k)] = v
+                } catch (_: Exception) { }
+            }
+        }
+    }
+
     /**
      * 统计拦截计数（按 source 分类）。
      * @return IntArray: [0]=广告, [1]=弹窗, [2]=防装(流氓)
