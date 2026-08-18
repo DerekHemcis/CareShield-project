@@ -67,6 +67,20 @@ class SettingsRepo(private val context: Context) {
     }
     suspend fun getWhitelist(): Set<String> = dataStore.data.first()[KEY_WHITELIST] ?: emptySet()
 
+    // 监护人密码（默认 1234）
+    suspend fun getGuardianPass(): String = dataStore.data.first()[KEY_GUARDIAN_PASS] ?: "1234"
+    fun getGuardianPassSync(): String = runCatching { runBlocking { getGuardianPass() } }.getOrDefault("1234")
+    suspend fun setGuardianPass(pass: String) {
+        dataStore.edit { it[KEY_GUARDIAN_PASS] = pass }
+    }
+
+    // 白名单保护模式
+    suspend fun getWhitelistMode(): Boolean = dataStore.data.first()[KEY_WHITELIST_MODE] == 1
+    fun getWhitelistModeSync(): Boolean = runCatching { runBlocking { getWhitelistMode() } }.getOrDefault(false)
+    suspend fun setWhitelistMode(on: Boolean) {
+        dataStore.edit { it[KEY_WHITELIST_MODE] = if (on) 1 else 0 }
+    }
+
     // 拦截日志（简单追加，存最近 200 条）
     suspend fun logIntercept(source: String, action: String) {
         dataStore.edit { st ->

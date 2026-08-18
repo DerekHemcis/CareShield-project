@@ -22,7 +22,8 @@ fun GuardianVerifyDialog(onDismiss: () -> Unit, onSuccess: () -> Unit) {
     val repo = SettingsRepo(context)
     var password by remember { mutableStateOf("") }
     var wrong by remember { mutableStateOf(false) }
-    val defaultPass = "1234"
+    // 读取真实存储的监护人密码（默认 1234，可在监护人面板修改）
+    val storedPass = remember { repo.getGuardianPassSync() }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp)) {
@@ -50,7 +51,7 @@ fun GuardianVerifyDialog(onDismiss: () -> Unit, onSuccess: () -> Unit) {
                     TextButton(onClick = onDismiss) { Text("返回") }
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
-                        if (password == defaultPass) {
+                        if (password == storedPass) {
                             onDismiss()
                             onSuccess()
                         } else {

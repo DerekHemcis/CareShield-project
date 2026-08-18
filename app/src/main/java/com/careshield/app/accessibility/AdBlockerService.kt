@@ -24,6 +24,15 @@ class AdBlockerService : AccessibilityService() {
         if (now - cooldown < 400) return
         cooldown = now
 
+        // 【诊断探针】收到事件即打印，用于确认服务在监听及识别链路
+        val eventTypeName = when (event.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "WINDOW_STATE_CHANGED"
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> "WINDOW_CONTENT_CHANGED"
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "WINDOWS_CHANGED"
+            else -> "event#${event.eventType}"
+        }
+        android.util.Log.i("CareShield", "PROBE event=$eventTypeName pkg=${event.packageName} cls=${event.className}")
+
         val repo = SettingsRepo(this)
         val skipAd = repo.isEnabledSync("func_skip_ad")
         val closePop = repo.isEnabledSync("func_close_pop")
@@ -40,7 +49,19 @@ class AdBlockerService : AccessibilityService() {
     private fun handleAd(root: AccessibilityNodeInfo, skipAd: Boolean, closePop: Boolean, swipeAd: Boolean) {
         val pkg = packageName ?: return
         val repo = SettingsRepo(this)
-        if (repo.isWhitelisted(pkg)) return
+
+        val whitelistMode = repo.isEnabledSync("whitelist_mode")
+        val blockWeb = repo.isEnabledSync("func_block_web")
+
+        // 白名单保护模式：开启时，仅"网页拦截"仍扫；否则白名单应用直接豁免
+        val isWhitelistedApp = repo.isWhitelisted(pkg)
+        if (!whitelistMode && isWhitelistedApp) {
+            return  // 非白名单模式：白名单内应用（微信/抖音等）不拦截
+        }
+        // 白名单模式开启时，对白名单应用内部的信息流广告仍可拦截（func_block_web 生效时）
+        if (whitelistMode && isWhitelistedApp && !blockWeb) {
+            return
+        }
 
         // 判断当前界面是否存在"广告上下文"（界面上有 广告/Ad/Sponsored 标签）
         val hasAdContext = if (skipAd || closePop) detectAdContext(root) else false
