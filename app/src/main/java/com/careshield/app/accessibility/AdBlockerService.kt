@@ -114,6 +114,11 @@ class AdBlockerService : AccessibilityService() {
             score = maxOf(score, SCORE_MID)
         }
 
+        // 倒计时跳过：纯数字(1~60)/"13s"/"剩余 5 秒"等，且位于屏幕角落小按钮（开屏广告计时）
+        if (skipAd && COUNTDOWN_ANYRegex.matches(text.trim()) && isCornerNode(node)) {
+            score = maxOf(score, SCORE_MID)
+        }
+
         // 中：广告上下文存在时的通用跳过/关闭
         if (skipAd && adContext && MID_SKIP.any { combined.contains(it) }) score = maxOf(score, SCORE_MID)
         if (closePop && adContext && MID_CLOSE.any { combined.contains(it) }) score = maxOf(score, SCORE_MID)
@@ -238,6 +243,11 @@ class AdBlockerService : AccessibilityService() {
         private val WEAK_CLOSE = listOf("×", "✕", "x", "✖", "关闭", "知道了")
 
         private val AD_LABEL = listOf("广告", "推广", "Sponsored", "Ad")
+
+        // 倒计时跳过按钮文本：如 "13" "13s" "3s跳过" "剩余 5 秒" "5 秒后"
+        private val COUNTDOWN_ANYRegex = Regex(
+            "(^[1-9]|^[1-5][0-9])(s|秒)?(跳过|后)?$|剩余.{0,2}[1-9][0-9]?.*秒|跳过后.{0,4}[1-9][0-9]?.*秒|广告.{0,3}[1-9][0-9]?.*秒"
+        )
 
         // 置信度阈值
         private const val SCORE_WEAK = 40
