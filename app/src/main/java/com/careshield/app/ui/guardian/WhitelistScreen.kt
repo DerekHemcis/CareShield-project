@@ -3,6 +3,7 @@ package com.careshield.app.ui.guardian
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,10 +11,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import com.careshield.app.data.SettingsRepo
 import kotlinx.coroutines.runBlocking
 
@@ -40,13 +43,28 @@ fun WhitelistScreen(onBack: () -> Unit) {
 
         LazyColumn(Modifier.fillMaxSize().padding(bottom = 16.dp)) {
             items(apps) { app ->
-                val label = app.loadLabel(context.packageManager).toString()
+                val pm = context.packageManager
+                val label = app.loadLabel(pm).toString()
                 val pkg = app.packageName
+                val icon = runCatching { app.loadIcon(pm).toBitmap() }.getOrNull()
                 val checked = whitelist.value.contains(pkg)
                 Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 3.dp)) {
                     Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(label, fontSize = 14.sp, modifier = Modifier.weight(1f))
-                        Text(pkg, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 8.dp))
+                        // 应用图标
+                        if (icon != null) {
+                            androidx.compose.foundation.Image(
+                                bitmap = icon.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        } else {
+                            Box(Modifier.size(36.dp))
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(label, fontSize = 14.sp)
+                            Text(pkg, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         Checkbox(
                             checked = checked,
                             onCheckedChange = { on ->

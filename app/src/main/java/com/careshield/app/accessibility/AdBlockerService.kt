@@ -108,6 +108,11 @@ class AdBlockerService : AccessibilityService() {
 
         if (score >= SCORE_STRONG) return score
 
+        // 高置信：纯"跳过"作为可点击按钮（开屏广告常见，不依赖广告上下文）
+        if (skipAd && node.isClickable && STANDALONE_SKIP.any { combined.trim() == it }) {
+            score = maxOf(score, SCORE_MID)
+        }
+
         // 中：广告上下文存在时的通用跳过/关闭
         if (skipAd && adContext && MID_SKIP.any { combined.contains(it) }) score = maxOf(score, SCORE_MID)
         if (closePop && adContext && MID_CLOSE.any { combined.contains(it) }) score = maxOf(score, SCORE_MID)
@@ -220,6 +225,9 @@ class AdBlockerService : AccessibilityService() {
         // 强证据：明确广告语义，直接拦截
         private val STRONG_SKIP = listOf("跳过广告", "点击跳过广告", "广告可跳过", "播放后跳过")
         private val STRONG_CLOSE = listOf("关闭广告", "关闭弹窗", "关闭广告悬浮窗")
+
+        // 独立"跳过"：作为可点击按钮时视为开屏广告（不依赖广告上下文）
+        private val STANDALONE_SKIP = listOf("跳过", "跳過", "Skip", "点击跳过")
 
         // 中证据：有广告上下文(界面有"广告"标签)时才拦
         private val MID_SKIP = listOf("跳过", "Skip", "点击跳过", "跳過")
