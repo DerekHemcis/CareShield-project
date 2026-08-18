@@ -39,9 +39,6 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 96.dp)
     ) {
-        // 监护人入口（监护人专属）
-        GuardianEntryCard { showGuardianDialog = true }
-
         // 老人防护开关
         SectionTitle("防护功能")
         GuardianFeatureSwitch("自动跳过广告", "识别开屏广告并自动点击跳过", "func_skip_ad", repo)
@@ -60,6 +57,10 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
             }
         }
 
+        // 监护人入口（置于通用上方）
+        SectionTitle("监护")
+        GuardianEntryCard { showGuardianDialog = true }
+
         SectionTitle("通用")
         // 语言：点击弹选择器
         SettingRow("语言", langLabel) { showLangDialog = true }
@@ -71,6 +72,36 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         SwitchRow("液态玻璃效果", "关闭以使用经典界面", liquidOn) { on ->
             liquidOn = on
             runBlocking { repo.setEnabled("liquid_glass", on) }
+        }
+
+        // 恢复默认
+        var showResetConfirm by remember { mutableStateOf(false) }
+        Spacer(Modifier.height(8.dp))
+        Card(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Row(Modifier.fillMaxWidth().clickable { showResetConfirm = true }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("恢复默认设置", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
+                Spacer(Modifier.weight(1f))
+                Text("重置", fontSize = 13.sp, color = MaterialTheme.colorScheme.onErrorContainer)
+            }
+        }
+        if (showResetConfirm) {
+            AlertDialog(
+                onDismissRequest = { showResetConfirm = false },
+                title = { Text("恢复默认") },
+                text = { Text("将恢复出厂默认设置：\n• 全部拦截功能关闭\n• 液态玻璃关闭\n• 主题跟随系统\n• 语言简体中文\n（无障碍服务状态不受影响）") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showResetConfirm = false
+                        runBlocking { repo.resetDefaults() }
+                        toast(context, "已恢复默认设置")
+                    }) { Text("确认") }
+                },
+                dismissButton = { TextButton(onClick = { showResetConfirm = false }) { Text("取消") } }
+            )
         }
     }
 

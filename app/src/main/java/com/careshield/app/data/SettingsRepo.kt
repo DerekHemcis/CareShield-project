@@ -81,6 +81,18 @@ class SettingsRepo(private val context: Context) {
         dataStore.edit { it[KEY_WHITELIST_MODE] = if (on) 1 else 0 }
     }
 
+    /** 恢复出厂默认：全部功能关闭、液态关、主题跟随系统(0)、语言简体(简体中文) */
+    suspend fun resetDefaults() {
+        dataStore.edit { st ->
+            listOf("func_skip_ad", "func_close_pop", "func_misclick", "func_block_web",
+                "func_rouge", "whitelist_mode", "liquid_glass").forEach { k ->
+                st[intPreferencesKey(k)] = 0
+            }
+            st[stringPreferencesKey("theme")] = "0"
+            st[stringPreferencesKey("lang")] = "简体中文"
+        }
+    }
+
     // 拦截日志（简单追加，存最近 200 条）
     suspend fun logIntercept(source: String, action: String) {
         dataStore.edit { st ->

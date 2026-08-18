@@ -35,6 +35,17 @@
             android:multiprocess="false"
             android:enabled="true" />
 
+        <!-- FileProvider：用于分享备份的 json / 日志文件 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- 无障碍广告拦截服务 -->
         <service
             android:name=".accessibility.AdBlockerService"

@@ -204,11 +204,22 @@ class AdBlockerService : AccessibilityService() {
     private fun clickIfSafe(node: AccessibilityNodeInfo, repo: SettingsRepo, source: String) {
         val pkg = packageName ?: return
         val action = (node.text?.toString() ?: node.contentDescription?.toString() ?: "按钮")
+        // 诊断：识别到广告按钮即打印（降频）
+        if (System.currentTimeMillis() - lastDiagDump > 2000) {
+            lastDiagDump = System.currentTimeMillis()
+            android.util.Log.i("CareShield", "命中[$source]: $action pkg=$pkg")
+        }
         try {
-            val ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            var ok = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            // 兜底：若节点点击失败，尝试可点击祖先
+            if (!ok) {
+                val anc = findClickableAncestor(node)
+                if (anc != null && anc !== node) ok = anc.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
             if (ok) {
-                android.util.Log.i("CareShield", "拦截[$source]: $action (pkg=$pkg)")
                 Thread { kotlinx.coroutines.runBlocking { repo.logIntercept(source, action) } }.start()
+            } else {
+                android.util.Log.i("CareShield", "点击失败: $action pkg=$pkg")
             }
         } catch (_: Exception) { }
     }
@@ -218,6 +229,7 @@ class AdBlockerService : AccessibilityService() {
     }
 
     @Volatile private var lastSwipeAd = 0L
+    @Volatile private var lastDiagDump = 0L
 
     companion object {
         // 强证据：明确广告语义，直接拦截

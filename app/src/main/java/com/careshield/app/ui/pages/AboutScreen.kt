@@ -40,7 +40,7 @@ fun AboutScreen() {
         Text("CareShield 亲安盾", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
         Text("守护家人安全上网", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
-        Text("版本 1.0.1", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("版本 1.0.3", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(24.dp))
 
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
@@ -104,7 +104,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text("CareShield 亲安盾", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text("当前版本：v1.0.1", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("当前版本：v1.0.3", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("已是最新版本", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -114,7 +114,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
         // 更新内容
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
-                Text("v1.0.1 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("v1.0.3 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Text(UPDATE_TEXT, fontSize = 13.sp, lineHeight = 20.sp)
             }
@@ -145,13 +145,29 @@ private fun AboutRow(title: String, onClick: () -> Unit) {
 }
 
 private fun exportBackup(context: Context) {
-    val json = runBlocking { SettingsRepo(context).exportSettings() }
-    val send = Intent().apply {
-        action = Intent.ACTION_SEND
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, json)
+    try {
+        val json = runBlocking { SettingsRepo(context).exportSettings() }
+        // 写入私有文件目录，生成 careshield_config.json
+        val file = java.io.File(context.filesDir, "careshield_config.json")
+        file.writeText(json)
+        android.util.Log.i("CareShield", "备份写入 ${file.absolutePath}")
+        toast(context, "配置已导出到 careshield_config.json")
+        // 分享文件（FileProvider）
+        reportShare(context, file)
+    } catch (e: Exception) {
+        toast(context, "导出失败：${e.message}")
     }
-    runCatching { context.startActivity(Intent.createChooser(send, "导出 CareShield 配置")) }
+}
+
+private fun reportShare(context: Context, file: java.io.File) {
+    val uri = androidx.core.content.FileProvider.getUriForFile(
+        context, "${context.packageName}.fileprovider", file)
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "application/json"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    runCatching { context.startActivity(Intent.createChooser(send, "导出配置")) }
 }
 
 private fun importBackup(context: Context) {

@@ -43,26 +43,48 @@ fun LogScreen() {
             Text("共 ${entries.size} 条", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         // 操作按钮：导出 / 删除
+        var showClearConfirm by remember { mutableStateOf(false) }
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = {
-                // 导出为文本分享
-                val text = entries.joinToString("\n") { "${it.time} ${it.source}: 拦截 ${it.action}" }
-                val send = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, text.ifBlank { "暂无拦截记录" })
+                // 导出为 .log 文件并用 FileProvider 分享
+                try {
+                    val logText = entries.joinToString("\n") { "${it.time} ${it.source}: 拦截 ${it.action}" }
+                    val file = java.io.File(context.filesDir, "careshield.log")
+                    file.writeText(logText.ifBlank { "暂无拦截记录" })
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        context, "${context.packageName}.fileprovider", file)
+                    val send = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    runCatching { context.startActivity(Intent.createChooser(send, "导出拦截日志")) }
+                } catch (e: Exception) {
+                    toast(context, "导出失败")
                 }
-                runCatching { context.startActivity(Intent.createChooser(send, "导出拦截日志")) }
             }, modifier = Modifier.weight(1f)) {
                 Text("导出日志", fontSize = 13.sp)
             }
-            OutlinedButton(onClick = {
-                runBlocking { repo.clearLog() }
-                entries = emptyList()
-                toast(context, "日志已清空")
-            }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = { showClearConfirm = true }, modifier = Modifier.weight(1f)) {
                 Text("删除日志", fontSize = 13.sp)
             }
+        }
+        if (showClearConfirm) {
+            AlertDialog(
+                onDismissRequest = { showClearConfirm = false },
+                title = { Text("确认删除") },
+                text = { Text("将清空全部拦截日志，此操作不可恢复。") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showClearConfirm = false
+                        runBlocking { repo.clearLog() }
+                        entries = emptyList()
+                        toast(context, "日志已清空")
+                    }) { Text("删除") }
+                },
+                dismissButton = { TextButton(onClick = { showClearConfirm = false }) { Text("取消") } }
+            )
         }
 
         if (entries.isEmpty()) {
