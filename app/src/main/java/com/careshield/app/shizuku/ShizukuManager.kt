@@ -68,7 +68,8 @@ object ShizukuManager {
 
     enum class ConnectResult { READY, REQUESTING, NEED_START }
 
-    private fun requestPermission() {
+    /** 请求 Shizuku 权限（供 UI 调用发授权申请） */
+    fun requestPermission() {
         runCatching { Shizuku.requestPermission(CODE_PERMISSION) }
     }
 
