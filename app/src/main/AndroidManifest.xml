@@ -27,11 +27,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Shizuku Provider：V13 绑定机制，声明后由系统自动触发 Shizuku 通信 -->
+        <!-- Shizuku Provider：V13 绑定机制，声明后由系统自动触发 Shizuku 通信。须 exported=true -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
-            android:exported="false"
+            android:exported="true"
             android:multiprocess="false"
             android:enabled="true" />
 
