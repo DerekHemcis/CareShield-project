@@ -14,8 +14,24 @@ object ShizukuManager {
     private const val CODE_PERMISSION = 1001
     @Volatile private var bound = false
 
+    /** Shizuku 服务是否已连接（binder 存在） */
     fun isAvailable(): Boolean =
         try { Shizuku.pingBinder() } catch (e: Throwable) { false }
+
+    /** 是否真正获得 Shizuku 权限（增强真正生效） */
+    fun hasPermission(): Boolean {
+        return try {
+            val preV11: Boolean = Shizuku.isPreV11()
+            val granted: Boolean = Shizuku.checkSelfPermission()
+            !preV11 && granted
+        } catch (e: Throwable) { false }
+    }
+
+    /**
+     * 增强是否完全就绪（需连接 + 权限）：
+     * 未装/未授权返回 false，首页应显示"未连接/待授权"。
+     */
+    fun isEnhanceReady(): Boolean = isAvailable() && hasPermission()
 
     /** V13 兼容：绑定由 Manifest 中的 ShizukuProvider 自动触发，这里只需注册监听 + 可请求权限 */
     fun bind(context: Context) {

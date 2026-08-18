@@ -78,6 +78,28 @@ class SettingsRepo(private val context: Context) {
     }
     suspend fun getLog(): String = get("log", "")
 
+    /**
+     * 统计拦截计数（按 source 分类）。
+     * @return IntArray: [0]=广告, [1]=弹窗, [2]=防装(流氓)
+     */
+    suspend fun getInterceptCounts(): IntArray {
+        val counts = IntArray(3)
+        val log = get("log", "")
+        if (log.isBlank()) return counts
+        for (line in log.lines()) {
+            if (line.isBlank()) continue
+            // 格式: timestamp|source|action
+            val parts = line.split('|')
+            if (parts.size < 3) continue
+            when (parts[1]) {
+                "广告" -> counts[0]++
+                "弹窗" -> counts[1]++
+                "流氓" -> counts[2]++
+            }
+        }
+        return counts
+    }
+
     companion object {
         // 默认白名单应用（微信、抖音等）
         val DEFAULT_WHITELIST = setOf(

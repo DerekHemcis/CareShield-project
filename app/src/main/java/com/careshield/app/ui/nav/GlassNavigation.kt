@@ -1,6 +1,8 @@
 package com.careshield.app.ui.nav
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,13 +17,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import com.careshield.app.R
 
 data class NavItem(
     val label: String,
@@ -30,8 +29,8 @@ data class NavItem(
 )
 
 /**
- * KernelSU 风格液态玻璃底部导航
- * 玻璃条 + 可滑动胶囊 + 选中图标浮起。API31+ 可用 AGSL 增强（本组件以 Compose 渐变近似，保证全版本可编译）
+ * 底部导航（玻璃条 + 胶囊高亮 + 图标浮起）
+ * 每个 tab 均可点击触发 onSelected
  */
 @Composable
 fun GlassNavigation(
@@ -41,53 +40,62 @@ fun GlassNavigation(
     modifier: Modifier = Modifier
 ) {
     val primary = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurfaceVariant
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.3f
     val bg = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp)
-            .height(64.dp)
+            .height(66.dp)
             .shadow(10.dp, RoundedCornerShape(28.dp))
             .background(
-                brush = Brush.verticalGradient(
-                    listOf(bg, bg.copy(alpha = 0.35f))
-                ),
+                brush = Brush.verticalGradient(listOf(bg, bg.copy(alpha = 0.35f))),
                 shape = RoundedCornerShape(28.dp)
             )
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
-            Modifier.fillMaxWidth(),
+            Modifier.fillMaxWidth().height(54.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEachIndexed { index, item ->
                 val selected = index == selectedIndex
-                // 选中胶囊：流动到该 tab 下方
-                if (selected) {
+                // 每个 tab 都可点击，切换页面
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable { onSelected(index) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 选中胶囊（仅视觉，位置固定居中）
+                    val capsuleAlpha by animateFloatAsState(
+                        if (selected) 1f else 0f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                    )
                     Box(
                         Modifier
-                            .size(width = 52.dp, height = 30.dp)
+                            .size(width = 50.dp, height = 30.dp)
                             .shadow(6.dp, RoundedCornerShape(15.dp))
                             .background(
-                                if (MaterialTheme.colorScheme.background.luminance() < 0.3f)
-                                    Brush.verticalGradient(listOf(primary.copy(alpha=0.55f), primary.copy(alpha=0.25f)))
-                                else Brush.verticalGradient(listOf(primary.copy(alpha=0.30f), primary.copy(alpha=0.12f))),
+                                val capGradient = if (dark)
+                                    Brush.verticalGradient(listOf(
+                                        primary.copy(alpha = 0.50f + 0.25f * capsuleAlpha),
+                                        primary.copy(alpha = 0.20f + 0.2f * capsuleAlpha)
+                                    ))
+                                else Brush.verticalGradient(listOf(
+                                    primary.copy(alpha = 0.28f + 0.25f * capsuleAlpha),
+                                    primary.copy(alpha = 0.10f + 0.2f * capsuleAlpha)
+                                )),
                                 RoundedCornerShape(15.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        NavIcon(item, selected, primary)
-                    }
-                } else {
-                    Box(
-                        Modifier.size(width = 52.dp, height = 30.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        NavIcon(item, selected, primary)
-                    }
+                            )
+                    )
+                    // 图标 + 文字（选中浮起放大）
+                    NavIcon(item, selected, if (selected) Color.White else onSurface)
                 }
             }
         }
@@ -95,31 +103,34 @@ fun GlassNavigation(
 }
 
 @Composable
-private fun NavIcon(item: NavItem, selected: Boolean, primary: Color) {
-    val scale by animateFloatAsState(if (selected) 1.28f else 1f, spring(dampingRatio = Spring.DampingRatioLowBouncy))
-    val color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+private fun NavIcon(item: NavItem, selected: Boolean, colorTint: Color) {
+    val scale by animateFloatAsState(
+        if (selected) 1.18f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy)
+    )
+    val labelVisible by animateFloatAsState(if (selected) 1f else 0f)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        val textColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
         Box(Modifier.scale(scale)) {
             if (item.icon != null) {
-                Icon(item.icon, contentDescription = item.label, tint = color, modifier = Modifier.size(22.dp))
+                Icon(item.icon, contentDescription = item.label, tint = colorTint, modifier = Modifier.size(22.dp))
             } else {
                 Text(item.emoji, fontSize = 22.sp)
             }
         }
+        // 文字只显示给选中的项，避免重叠
         if (selected) {
             Text(
                 item.label,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.offset(x = 0.dp, y = (-6).dp)
+                maxLines = 1
             )
         } else {
-            Text(item.label, fontSize = 10.sp, color = textColor, modifier = Modifier.offset(y = (-6).dp))
+            Text(item.label, fontSize = 9.sp, color = colorTint.copy(alpha = 0.8f), maxLines = 1)
         }
     }
 }

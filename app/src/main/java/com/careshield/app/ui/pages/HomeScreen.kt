@@ -33,10 +33,13 @@ fun HomeScreen(
 
     var a11yOn by remember { mutableStateOf(isAccessibilityEnabled(context)) }
     var shizukuOn by remember { mutableIntStateOf(0) } // 0 init
+    var counts by remember { mutableStateOf(IntArray(3)) } // [广告, 弹窗, 防装]
 
     LaunchedEffect(Unit) {
         a11yOn = isAccessibilityEnabled(context)
-        shizukuOn = if (ShizukuManager.isAvailable()) 1 else 0
+        shizukuOn = if (ShizukuManager.isEnhanceReady()) 1 else 0
+        // 读取真实拦截统计
+        counts = repo.getInterceptCounts()
     }
 
     val primary = MaterialTheme.colorScheme.primary
@@ -77,11 +80,11 @@ fun HomeScreen(
                 Text("已为家人拦截广告与流氓软件打扰", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth()) {
-                    StatCell(Modifier.weight(1f), "12", "今日拦截广告")
+                    StatCell(Modifier.weight(1f), counts[0].toString(), "今日拦截广告")
                     Spacer(Modifier.width(10.dp))
-                    StatCell(Modifier.weight(1f), "3", "误触弹窗拦截")
+                    StatCell(Modifier.weight(1f), counts[1].toString(), "误触弹窗拦截")
                     Spacer(Modifier.width(10.dp))
-                    StatCell(Modifier.weight(1f), "0", "防装软件")
+                    StatCell(Modifier.weight(1f), counts[2].toString(), "防装软件")
                 }
             }
         }

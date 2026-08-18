@@ -43,10 +43,10 @@ class AdBlockerService : AccessibilityService() {
             val text = (node.text?.toString() ?: "") + (node.contentDescription?.toString() ?: "")
             if (text.isBlank()) continue
             if (skipAd && SKIP_ANY.any { text.contains(it) }) {
-                clickIfSafe(node, repo); return
+                clickIfSafe(node, repo, "广告"); return
             }
             if (closePop && CLOSE_ANY.any { text.contains(it, ignoreCase = true) }) {
-                clickIfSafe(node, repo); return
+                clickIfSafe(node, repo, "弹窗"); return
             }
         }
     }
@@ -58,13 +58,13 @@ class AdBlockerService : AccessibilityService() {
         }
     }
 
-    private fun clickIfSafe(node: AccessibilityNodeInfo, repo: SettingsRepo) {
+    private fun clickIfSafe(node: AccessibilityNodeInfo, repo: SettingsRepo, source: String) {
         val pkg = packageName ?: return
         if (repo.isWhitelisted(pkg)) return
         try {
             node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            val source = node.text?.toString() ?: "按钮"
-            Thread { kotlinx.coroutines.runBlocking { repo.logIntercept("广告", source) } }.start()
+            val action = node.text?.toString() ?: "按钮"
+            Thread { kotlinx.coroutines.runBlocking { repo.logIntercept(source, action) } }.start()
         } catch (_: Exception) { }
     }
 
