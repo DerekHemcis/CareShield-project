@@ -61,8 +61,6 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         }
 
         SectionTitle("通用")
-        // 检查更新
-        SettingRow("检查更新", "3.2.5 为最新版本") { toast(context, "已是最新版本") }
         // 语言：点击弹选择器
         SettingRow("语言", langLabel) { showLangDialog = true }
         // 主题：点击弹选择器

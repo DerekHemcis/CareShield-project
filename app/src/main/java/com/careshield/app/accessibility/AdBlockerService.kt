@@ -114,8 +114,9 @@ class AdBlockerService : AccessibilityService() {
             score = maxOf(score, SCORE_MID)
         }
 
-        // 倒计时跳过：纯数字(1~60)/"13s"/"剩余 5 秒"等，且位于屏幕角落小按钮（开屏广告计时）
-        if (skipAd && COUNTDOWN_ANYRegex.matches(text.trim()) && isCornerNode(node)) {
+        // 倒计时跳过：屏幕角落小按钮，文本含数字(1~60)即视为开屏广告计时器
+        // 覆盖各种位置形态：纯数字"10"、跳过在前"跳过 10"、跳过在后"3跳过"、带单位"13s/剩余5秒"
+        if (skipAd && isCornerNode(node) && text.contains(Regex("[1-9][0-9]?|秒|s"))) {
             score = maxOf(score, SCORE_MID)
         }
 
