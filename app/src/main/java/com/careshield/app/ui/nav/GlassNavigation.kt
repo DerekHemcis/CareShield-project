@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -77,22 +78,20 @@ fun GlassNavigation(
                         if (selected) 1f else 0f,
                         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
                     )
+                    val capGradient = if (dark)
+                        Brush.verticalGradient(listOf(
+                            primary.copy(alpha = 0.50f + 0.25f * capsuleAlpha),
+                            primary.copy(alpha = 0.20f + 0.2f * capsuleAlpha)
+                        ))
+                    else Brush.verticalGradient(listOf(
+                        primary.copy(alpha = 0.28f + 0.25f * capsuleAlpha),
+                        primary.copy(alpha = 0.10f + 0.2f * capsuleAlpha)
+                    ))
                     Box(
                         Modifier
                             .size(width = 50.dp, height = 30.dp)
                             .shadow(6.dp, RoundedCornerShape(15.dp))
-                            .background(
-                                val capGradient = if (dark)
-                                    Brush.verticalGradient(listOf(
-                                        primary.copy(alpha = 0.50f + 0.25f * capsuleAlpha),
-                                        primary.copy(alpha = 0.20f + 0.2f * capsuleAlpha)
-                                    ))
-                                else Brush.verticalGradient(listOf(
-                                    primary.copy(alpha = 0.28f + 0.25f * capsuleAlpha),
-                                    primary.copy(alpha = 0.10f + 0.2f * capsuleAlpha)
-                                )),
-                                RoundedCornerShape(15.dp)
-                            )
+                            .background(capGradient, RoundedCornerShape(15.dp))
                     )
                     // 图标 + 文字（选中浮起放大）
                     NavIcon(item, selected, if (selected) Color.White else onSurface)

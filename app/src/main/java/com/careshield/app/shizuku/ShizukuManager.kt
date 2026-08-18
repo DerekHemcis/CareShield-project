@@ -22,7 +22,7 @@ object ShizukuManager {
     fun hasPermission(): Boolean {
         return try {
             val preV11: Boolean = Shizuku.isPreV11()
-            val granted: Boolean = Shizuku.checkSelfPermission()
+            val granted: Boolean = Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
             !preV11 && granted
         } catch (e: Throwable) { false }
     }
