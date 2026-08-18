@@ -27,6 +27,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Shizuku Provider：V13 绑定机制，声明后由系统自动触发 Shizuku 通信 -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:exported="false"
+            android:multiprocess="false"
+            android:enabled="true" />
+
         <!-- 无障碍广告拦截服务 -->
         <service
             android:name=".accessibility.AdBlockerService"

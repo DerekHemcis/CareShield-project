@@ -10,18 +10,28 @@ import rikka.shizuku.Shizuku
  */
 object ShizukuManager {
 
+    val AUTHORITY = "rikka.shizuku"
+    private const val CODE_PERMISSION = 1
     @Volatile private var bound = false
 
     fun isAvailable(): Boolean =
         try { Shizuku.pingBinder() } catch (e: Throwable) { false }
 
+    /** V13 兼容：绑定由 Manifest 中的 ShizukuProvider 自动触发，这里只需注册监听 + 可请求权限 */
     fun bind(context: Context) {
         if (bound) return
         try {
             Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
-            Shizuku.bind(context)
+            // V13 不再需要手动 bind，绑定由 ShizukuProvider 完成
+            // 这里仅尝试请求读写权限（权限已由 root 或手动授权、或无线调试授予）
             bound = true
         } catch (e: Throwable) { bound = false }
+    }
+
+    fun requestPermission() {
+        if (Shizuku.isPreV11() || !Shizuku.checkSelfPermission()) {
+            runCatching { Shizuku.requestPermission(CODE_PERMISSION) }
+        }
     }
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
