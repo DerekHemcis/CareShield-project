@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_light">#2EAF7C</color>
+    <color name="primary_dark">#4AD99F</color>
+    <color name="brand_gradient_start">#2EAF7C</color>
+    <color name="brand_gradient_end">#1E9E6E</color>
+
+    <color name="bg_light">#EEF2F1</color>
+    <color name="bg_dark">#050706</color>
+
+    <color name="card_light">#FFFFFF</color>
+    <color name="card_dark">#1A201E</color>
+
+    <color name="text_primary_light">#1A2A26</color>
+    <color name="text_secondary_light">#71837C</color>
+    <color name="text_primary_dark">#E8EFEB</color>
+    <color name="text_secondary_dark">#97A6A0</color>
+
+    <color name="shizuku_warn_bg">#F5D9B5</color>
+    <color name="shizuku_warn_btn">#E28A2A</color>
+    <color name="ic_launcher_bg">#0E251D</color>
+</resources>
