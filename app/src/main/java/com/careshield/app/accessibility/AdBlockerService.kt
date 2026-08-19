@@ -19,10 +19,21 @@ class AdBlockerService : AccessibilityService() {
     @Volatile private var cooldown = 0L
     private val handler = Handler(Looper.getMainLooper())
 
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        android.util.Log.i("CareShield", "DIAG ServiceConnected, pkg=${packageName}, info=${serviceInfo}")
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val now = System.currentTimeMillis()
         if (now - cooldown < 100) return
         cooldown = now
+
+        // 【诊断】每 800ms 打一条事件接收日志，确认服务是否收到窗口事件
+        if (now - lastRecvLog > 800) {
+            lastRecvLog = now
+            android.util.Log.i("CareShield", "RECV evt=${event.eventType} pkg=${event.packageName}")
+        }
 
         // 使用缓存的开关状态（避免每次事件 runBlocking 读 DataStore 造成掉帧）
         // 每 2 秒刷新一次缓存
@@ -43,6 +54,7 @@ class AdBlockerService : AccessibilityService() {
     @Volatile private var cachedSwipeAd = false
     @Volatile private var cachedAggressive = false
     @Volatile private var cacheTime = 0L
+    @Volatile private var lastRecvLog = 0L
 
     private fun refreshSwitchCache() {
         val repo = SettingsRepo(this)
@@ -210,7 +222,7 @@ class AdBlockerService : AccessibilityService() {
         // 高置信：含"跳过/Skip"（开屏广告常见，含倒计时如 1s跳过 3跳过 跳过 10；不依赖广告上下文）
         // 不要求节点自身 clickable：匹配后统一找可点击祖先；与倒计时数字绑定，避免误杀日历/时间
         if (skipAd && (combined.contains("跳过") || combined.contains("Skip"))) {
-            score = maxOf(score, SCORE_MID)
+            score = maxOf(score, SCORE_STRONG)  // 强证据：含"跳过"开屏按钮必拦
         }
         // 倒计时+跳过绑定：数字与"跳过"在同一按钮（如 "跳过 10" "3s跳过" "跳过广告 5 秒"）
         if (skipAd && COUNTDOWN_SKIPregex.matches(text.trim())) {
