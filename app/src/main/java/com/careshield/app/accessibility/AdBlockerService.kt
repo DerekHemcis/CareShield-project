@@ -107,8 +107,9 @@ class AdBlockerService : AccessibilityService() {
         if (cachedAggressive) {
             if (aggressiveSkipTry(root, repo)) return
         }
-        // ---- 策略2: 信息流"广告"标签 → 上滑跳过 ----
-        if (swipeAd && AD_LABEL.any { hasTextNode(root, it) }) {
+        // ---- 策略2: 信息流"广告"标签 → 上滑跳过（严格：仅信息流App + 精确广告标签 + 排除自身/无广告App） ----
+        if (swipeAd && isFeedApp(packageName ?: "") && hasExactAdTag(root) &&
+            pkg != context.packageName && !isNoAdApp(pkg)) {
             performSwipeUp()
         }
 
@@ -257,6 +258,20 @@ class AdBlockerService : AccessibilityService() {
         } catch (_: Exception) { false }
     }
 
+    private fun isFeedApp(pkg: String): Boolean {
+        return FEED_PKG_PREFIXES.any { pkg.startsWith(it) }
+    }
+
+    private fun hasExactAdTag(root: AccessibilityNodeInfo): Boolean {
+        val nodes = mutableListOf<AccessibilityNodeInfo>()
+        collectAll(root, nodes)
+        return nodes.any { node ->
+            val t = node.text?.toString() ?: ""
+            val d = node.contentDescription?.toString() ?: ""
+            (t == "广告" || d == "广告") && node.className?.toString()?.contains("TextView") == true
+        }
+    }
+
     private fun hasTextNode(root: AccessibilityNodeInfo, keyword: String): Boolean {
         val nodes = mutableListOf<AccessibilityNodeInfo>()
         collectAll(root, nodes)
@@ -362,6 +377,12 @@ class AdBlockerService : AccessibilityService() {
         private val BACK_ANY = listOf("返回", "上一页", "Back", "back", "‹", "‹‹", "←")
 
         private val AD_LABEL = listOf("广告", "推广", "Sponsored", "Ad")
+
+        // 信息流类 App 前缀（上滑跳过仅限这类，防误触其它）
+        private val FEED_PKG_PREFIXES = listOf(
+            "com.ss.android.ugc.aweme", "com.kuaishou", "com.sina.weibo",
+            "com.ss.android.article", "com.xingin.xhs"
+        )
 
         // 无广告/单机/工具类应用前缀（本地工具、系统组件、输入法等，跳过拦截防误杀）
         private val NO_AD_PKGS = listOf(
