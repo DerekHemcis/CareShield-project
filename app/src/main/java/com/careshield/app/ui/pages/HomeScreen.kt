@@ -116,9 +116,9 @@ fun HomeScreen(
         // 功能开关
         HomeSectionTitle("功能")
         FeatureSwitch(T("自动跳过广告"), T("开屏广告 · 贴片广告自动点「跳过」"), "func_skip_ad", repo)
-        FeatureSwitch(T("弹窗自动关闭"), "识别「关闭/×」关闭骚扰弹窗", "func_close_pop", repo)
-        FeatureSwitch("防误触下载", "拦截跳转应用商店下载页", "func_misclick", repo)
-        FeatureSwitch("流氓软件拦截", "Shizuku 增强 · 阻止安装恶意应用", "func_rouge", repo, needsShizuku = true)
+        FeatureSwitch(T("弹窗自动关闭"), T("识别「关闭/×」关闭骚扰弹窗"), "func_close_pop", repo)
+        FeatureSwitch(T("防误触下载"), T("拦截跳转应用商店下载页"), "func_misclick", repo)
+        FeatureSwitch(T("流氓软件拦截"), T("Shizuku 增强 · 阻止安装恶意应用"), "func_rouge", repo, needsShizuku = true)
     }
 }
 

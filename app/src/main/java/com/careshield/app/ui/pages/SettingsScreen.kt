@@ -48,14 +48,14 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     ) {
         // 老人防护开关
         SectionTitle("防护功能")
-        GuardianFeatureSwitch("自动跳过广告", "识别开屏广告并自动点击跳过", "func_skip_ad", repo, resetCounter)
-        GuardianFeatureSwitch("自动关闭广告弹窗", "识别 关闭/× 关闭（需广告上下文）", "func_close_pop", repo, resetCounter)
-        GuardianFeatureSwitch("滑屏跳过信息流广告", "抖音/快手信息流广告自动上滑", "func_misclick", repo, resetCounter)
-        GuardianFeatureSwitch("拦截网页广告跳转", "防止误触打开广告网页", "func_block_web", repo, resetCounter)
+        GuardianFeatureSwitch(T("自动跳过广告"), T("识别开屏广告并自动点击跳过"), "func_skip_ad", repo, resetCounter)
+        GuardianFeatureSwitch(T("自动关闭广告弹窗"), T("识别 关闭/× 关闭（需广告上下文）"), "func_close_pop", repo, resetCounter)
+        GuardianFeatureSwitch(T("滑屏跳过信息流广告"), T("抖音/快手信息流广告自动上滑"), "func_misclick", repo, resetCounter)
+        GuardianFeatureSwitch(T("拦截网页广告跳转"), T("防止误触打开广告网页"), "func_block_web", repo, resetCounter)
 
         SectionTitle("增强能力")
         // 连接 Shizuku
-        SettingRow("连接 Shizuku 增强", if (ShizukuManager.isEnhanceReady()) "已连接" else "未连接") {
+        SettingRow(T("连接 Shizuku 增强"), if (ShizukuManager.isEnhanceReady()) T("已连接") else T("未连接")) {
             if (!ShizukuManager.isEnhanceReady()) {
                 ShizukuManager.requestPermission()
                 toast(context, "已发起 Shizuku 授权请求")
