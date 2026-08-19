@@ -28,6 +28,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 应用已保存的语言（零重启即时生效）
+        com.careshield.app.ui.locale.AppLocaleManager.applyLocale(this)
+
         // 注册 Shizuku 权限结果监听：授权成功 → 更新状态为已连接
         ShizukuManager.setPermissionResultListener { _, granted ->
             shizukuState.value = if (granted) 2 else 0
