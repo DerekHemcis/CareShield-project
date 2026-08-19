@@ -77,7 +77,7 @@ fun LogScreen() {
         Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             StatNum("$adCount", "广告", 0xFFFF7A2F)
             StatNum("$racketCount", "捆绑软件", 0xFFFFC120)
-            StatNum("$requestCount", "请求", if (dark) s.onBackground else s.onBackground)
+            StatNum("$requestCount", "请求", if (dark) 0xFFE0E0E0L else 0xFF333333L)
         }
         Spacer(Modifier.height(8.dp))
         // 分段进度条
