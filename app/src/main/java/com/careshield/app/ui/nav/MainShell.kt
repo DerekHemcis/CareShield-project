@@ -1,5 +1,11 @@
 package com.careshield.app.ui.nav
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.careshield.app.ui.pages.HomeScreen
 import com.careshield.app.ui.pages.SettingsScreen
@@ -36,18 +41,29 @@ fun MainShell(
     )
 
     Column(Modifier.fillMaxSize()) {
+        // 主体页面：带动画切换
         Box(Modifier.weight(1f).fillMaxSize()) {
-            when (tab) {
-                0 -> HomeScreen(
-                    onOpenAccessibility = onOpenAccessibility,
-                    onOpenShizuku = onOpenShizuku,
-                    shizukuState = shizukuState
-                )
-                1 -> SettingsScreen(theme = theme, onThemeChange = onThemeChange)
-                2 -> LogScreen()
-                3 -> AboutScreen()
+            AnimatedContent(
+                targetState = tab,
+                transitionSpec = {
+                    (slideInHorizontally { it / 3 } + fadeIn())
+                        .togetherWith(slideOutHorizontally { -it / 3 } + fadeOut())
+                },
+                label = "tabSwitch"
+            ) { t ->
+                when (t) {
+                    0 -> HomeScreen(
+                        onOpenAccessibility = onOpenAccessibility,
+                        onOpenShizuku = onOpenShizuku,
+                        shizukuState = shizukuState
+                    )
+                    1 -> SettingsScreen(theme = theme, onThemeChange = onThemeChange)
+                    2 -> LogScreen()
+                    3 -> AboutScreen()
+                }
             }
         }
+        // 底部导航
         GlassNavigation(
             items = items,
             selectedIndex = tab,

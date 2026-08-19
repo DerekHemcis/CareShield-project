@@ -44,10 +44,10 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     ) {
         // 老人防护开关
         SectionTitle("防护功能")
-        GuardianFeatureSwitch("自动跳过广告", "识别开屏广告并自动点击跳过", "func_skip_ad", repo)
-        GuardianFeatureSwitch("自动关闭广告弹窗", "识别 关闭/× 关闭（需广告上下文）", "func_close_pop", repo)
-        GuardianFeatureSwitch("滑屏跳过信息流广告", "抖音/快手信息流广告自动上滑", "func_misclick", repo)
-        GuardianFeatureSwitch("拦截网页广告跳转", "防止误触打开广告网页", "func_block_web", repo)
+        GuardianFeatureSwitch("自动跳过广告", "识别开屏广告并自动点击跳过", "func_skip_ad", repo, resetCounter)
+        GuardianFeatureSwitch("自动关闭广告弹窗", "识别 关闭/× 关闭（需广告上下文）", "func_close_pop", repo, resetCounter)
+        GuardianFeatureSwitch("滑屏跳过信息流广告", "抖音/快手信息流广告自动上滑", "func_misclick", repo, resetCounter)
+        GuardianFeatureSwitch("拦截网页广告跳转", "防止误触打开广告网页", "func_block_web", repo, resetCounter)
 
         SectionTitle("增强能力")
         // 连接 Shizuku
@@ -71,7 +71,7 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         val themeMap = listOf("跟随系统", "浅色", "深色")
         SettingRow("主题设置", themeMap.getOrElse(theme) { "跟随系统" }) { showThemeDialog = true }
         // 液态玻璃开关
-        var liquidOn by remember { mutableStateOf(repo.isEnabledSync("liquid_glass")) }
+        var liquidOn by remember(resetCounter) { mutableStateOf(repo.isEnabledSync("liquid_glass")) }
         SwitchRow("液态玻璃效果", "关闭以使用经典界面", liquidOn) { on ->
             liquidOn = on
             runBlocking { repo.setEnabled("liquid_glass", on) }
@@ -175,8 +175,8 @@ private fun ThemeOption(label: String, value: Int, current: Int, onChange: (Int)
 }
 
 @Composable
-private fun GuardianFeatureSwitch(title: String, desc: String, key: String, repo: SettingsRepo) {
-    var checked by remember { mutableStateOf(repo.isEnabledSync(key)) }
+private fun GuardianFeatureSwitch(title: String, desc: String, key: String, repo: SettingsRepo, resetKey: Int = 0) {
+    var checked by remember(resetKey) { mutableStateOf(repo.isEnabledSync(key)) }
     Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
