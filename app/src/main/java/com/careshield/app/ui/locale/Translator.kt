@@ -138,9 +138,6 @@ private val translations: Map<String, LangMap> = mapOf(
     "浅色" to LangMap(en = "Light"),
     "深色" to LangMap(en = "Dark"),
     "开启守护 · Shizuku · 无障碍说明" to LangMap(en = "Enable protection · Shizuku · Accessibility guide"),
-    "为长辈打造的安全上网助手。
-
-自动跳过广告、关闭骚扰弹窗、防止误触下载、识别并拦截流氓软件。通过无障碍服务与 Shizuku 增强技术，让家人远离广告与骗局，安心使用手机。" to LangMap(en = "A safe browsing assistant built for elders. Auto-skip ads, close popups, block downloads, detect malicious apps."),
     "最新版本" to LangMap(en = "Latest version"),
     "白名单应用管理" to LangMap(en = "Whitelist apps"),
     "选择允许老人使用的应用" to LangMap(en = "Select apps elders can use"),
