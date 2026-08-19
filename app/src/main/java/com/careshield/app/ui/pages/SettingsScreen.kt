@@ -83,12 +83,16 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
                 context.stopService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
                 vpnOn = false
             } else {
-                val intent = android.net.VpnService.prepare(context)
-                if (intent != null) {
-                    vpnLauncher.launch(intent)
-                } else {
-                    context.startService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
-                    vpnOn = true
+                try {
+                    val intent = android.net.VpnService.prepare(context)
+                    if (intent != null) {
+                        vpnLauncher.launch(intent)
+                    } else {
+                        context.startService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
+                        vpnOn = true
+                    }
+                } catch (e: Exception) {
+                    toast(context, "VPN 启动失败：${e.message}")
                 }
             }
         }
@@ -314,7 +318,10 @@ private fun toast(context: android.content.Context, msg: String) {
 }
 
 private fun isVpnRunning(): Boolean {
-    // 简单检测：VPN 接口存在即认为运行中
-    val fds = java.io.File("/proc/net/if_inet6").listFiles() ?: return false
-    return fds.any { it.name == "tun0" || it.name == "tun1" }
+    return try {
+        // 检查是否有 VPN 接口
+        val dir = java.io.File("/sys/class/net")
+        if (!dir.exists()) return false
+        dir.listFiles()?.any { it.name.startsWith("tun") || it.name.startsWith("ppp") } ?: false
+    } catch (_: Exception) { false }
 }

@@ -30,30 +30,32 @@ class DnsVpnService : VpnService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // 停止指令
         if (intent?.action == ACTION_STOP) {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForegroundCompat()
-        val builder = Builder()
-        builder.setSession("CareShield DNS 过滤")
-        builder.setMtu(1400)
-        // 分配本地地址（仅 DNS，可极简 /30）
-        builder.addAddress("10.0.1.1", 32)
-        // 关键：把 DNS 指向广告过滤 DNS，路由所有流量（DNS 走我们）
-        builder.addRoute("0.0.0.0", 0)
-        // 设置 DNS（用 InetAddress，兼容所有版本）
-        AD_DNS.forEach { ad ->
-            try { builder.addDnsServer(java.net.InetAddress.getByName(ad)) } catch (_: Exception) {}
-        }
+        // 整个启动包 try-catch，任何异常都不崩溃（record + 停止）
         try {
+            startForegroundCompat()
+            val builder = Builder()
+            builder.setSession("CareShield DNS 过滤")
+            builder.setMtu(1400)
+            builder.addAddress("10.0.1.2", 32)
+            builder.addRoute("0.0.0.0", 0)
+            AD_DNS.forEach { ad ->
+                try { builder.addDnsServer(java.net.InetAddress.getByName(ad)) } catch (_: Exception) {}
+            }
             fd?.close()
             fd = builder.establish()
-            Log.i("CareShield", "DNS VPN established, DNS=${AD_DNS.joinToString()}")
+            if (fd == null) {
+                Log.e("CareShield", "VPN establish returned null（可能未授权）")
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            Log.i("CareShield", "DNS VPN established")
         } catch (e: Exception) {
-            Log.e("CareShield", "VPN establish failed: ${e.message}")
-            stopSelf()
+            Log.e("CareShield", "VPN start crash: ${e.message}")
+            runCatching { stopSelf() }
         }
         return START_STICKY
     }

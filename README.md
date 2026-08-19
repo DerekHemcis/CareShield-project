@@ -56,21 +56,29 @@ app\build\outputs\apk\debug\app-debug.apk
 ## 四、工程结构
 ```
 app/src/main/java/com/careshield/app/
-├── MainActivity.kt          入口
-├── CareShieldApp.kt         Application（绑定 Shizuku）
-├── accessibility/          无障碍广告拦截服务（关键词规则库）
-│   └── AdBlockerService.kt
-├── data/SettingsRepo.kt    DataStore 设置/白名单/日志
+├── MainActivity.kt          入口（语言热重启、Shizuku连接）
+├── CareShieldApp.kt         Application（绑定 Shizuku + 自动连）
+├── accessibility/          无障碍广告拦截服务
+│   └── AdBlockerService.kt  多策略：文字/倒计时/激进/防误触/信息流
+├── data/SettingsRepo.kt    DataStore 设置/白名单/日志/API key
 ├── shizuku/ShizukuManager.kt  Shizuku 集成
+├── security/
+│   ├── RogueClassifier.kt   流氓软件7类判定引擎
+│   ├── RogueWatchdog.kt     新装APK监听+云检+本地兜底拦截
+│   ├── VirusTotalClient.kt  Virustotal 云端哈希识别
+│   └── DnsVpnService.kt     DNS 过滤 VPN（源头拦广告域名）
+│   └── DnsBlocker.kt        hosts 域名拦截（AdGuard规则）
 ├── ui/
 │   ├── Theme.kt            Material3 深浅主题
-│   ├── nav/                MainShell + 液态玻璃导航
+│   ├── nav/MainShell.kt    主壳 + 手势切页 + 底部导航
+│   ├── nav/GlassNavigation.kt Material3 导航（液态/简约双模式）
 │   ├── pages/              首页/设置/日志/关于
-│   ├── guardian/Dialog.kt  监护人密码验证
-│   └── liquidglass/        液态玻璃（AGSL 入口）
-app/src/main/res/raw/
-├── liquid_glass_dispersion.agsl  KernelSU 提取：折射+7色色散
-└── liquid_glass_base.agsl        KernelSU 提取：基础折射
+│   ├── guardian/           监护人面板/白名单/改密码
+│   ├── locale/AppLocaleManager.kt + Translator.kt  多语言(简/繁/英)
+│   └── shizuku/ShizukuGuideScreen.kt  图形化引导向导
+app/src/main/res/
+├── raw/ad_hosts.txt        3500+ 广告域名（AdGuard规则提取）
+└── raw/liquid_glass*.agsl  KernelSU 提取 AGSL shader
 ```
 
 ---
