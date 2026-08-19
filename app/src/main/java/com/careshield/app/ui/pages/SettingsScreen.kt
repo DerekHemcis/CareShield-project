@@ -63,6 +63,34 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
                 toast(context, "Shizuku 已连接")
             }
         }
+        // DNS 广告过滤（VpnService 拦广告域名源头）
+        var vpnOn by remember { mutableStateOf(isVpnRunning()) }
+        val vpnLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+        ) {
+            // 授权完成，启动服务
+            try {
+                context.startForegroundService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
+                vpnOn = true
+            } catch (_: Exception) {
+                context.startService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
+                vpnOn = true
+            }
+        }
+        SettingRow(if (vpnOn) "DNS 广告过滤(开)" else "DNS 广告过滤(关)", if (vpnOn) "源头拦广告域名" else "开启后拦截广告域名") {
+            if (vpnOn) {
+                context.stopService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
+                vpnOn = false
+            } else {
+                val intent = android.net.VpnService.prepare(context)
+                if (intent != null) {
+                    vpnLauncher.launch(intent)
+                } else {
+                    context.startService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
+                    vpnOn = true
+                }
+            }
+        }
         // 安全 API key（Virustotal，可留空）
         var apiKeySet by remember { mutableStateOf(repo.getApiKeySync().isNotBlank()) }
         SettingRow(
@@ -282,4 +310,10 @@ internal fun SwitchRow(title: String, desc: String, checked: Boolean, onChange: 
 
 private fun toast(context: android.content.Context, msg: String) {
     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+}
+
+private fun isVpnRunning(): Boolean {
+    // 简单检测：VPN 接口存在即认为运行中
+    val fds = java.io.File("/proc/net/if_inet6").listFiles() ?: return false
+    return fds.any { it.name == "tun0" || it.name == "tun1" }
 }
