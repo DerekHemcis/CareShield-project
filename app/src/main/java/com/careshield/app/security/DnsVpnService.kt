@@ -43,8 +43,10 @@ class DnsVpnService : VpnService() {
         builder.addAddress("10.0.1.1", 32)
         // 关键：把 DNS 指向广告过滤 DNS，路由所有流量（DNS 走我们）
         builder.addRoute("0.0.0.0", 0)
-        // 设置 DNS（循环 add，兼容 Builder API）
-        AD_DNS.forEach { builder.addDnsServer(it) }
+        // 设置 DNS（用 InetAddress，兼容所有版本）
+        AD_DNS.forEach { ad ->
+            try { builder.addDnsServer(java.net.InetAddress.getByName(ad)) } catch (_: Exception) {}
+        }
         try {
             fd?.close()
             fd = builder.establish()
@@ -76,7 +78,7 @@ class DnsVpnService : VpnService() {
             .setOngoing(true)
             .build()
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_VPN)
+            startForeground(1, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
             startForeground(1, notification)
         }

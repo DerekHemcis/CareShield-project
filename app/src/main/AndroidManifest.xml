@@ -3,7 +3,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <!-- Shizuku 权限：免 root 增强能力 -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
@@ -37,12 +36,12 @@
             android:multiprocess="false"
             android:enabled="true" />
 
-        <!-- DNS 过滤 VPN 服务（官方格式：intent-filter + BIND_VPN_SERVICE） -->
+        <!-- DNS 过滤 VPN 服务（官方格式：intent-filter + dataSync 类型，兼容各 compileSdk） -->
         <service
             android:name=".security.DnsVpnService"
             android:exported="true"
             android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="vpn">
+            android:foregroundServiceType="dataSync">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
