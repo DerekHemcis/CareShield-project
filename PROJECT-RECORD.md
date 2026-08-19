@@ -256,4 +256,26 @@ PackageManager 加载各应用图标显示。
 
 ---
 
+## 十一、DNS 过滤 VPN + 自干扰修复（2026-08-20）
+
+### 11.1 视频 App 广告拦截挑战
+测试发现腾讯/咪咕/乐视等 open 屏广告登录：
+- 广告跳过按钮多为 webview/纯图片，**无障碍读不到** → 点跳过无效
+- /system hosts 只读无法写；ndc 改 DNS 不被识别
+
+### 11.2 解决方案：DnsVpnService（本机 DNS 过滤 VPN）
+- VpnService 建立本地 VPN，DNS 指向广告过滤 DNS（AdGuard 94.140.14.14/15.15）
+- 所有 App DNS 解析走广告过滤 → 广告域名解析 0.0.0.0 → 广告不加载（源头条拦）
+- 无需 root、前台服务常驻、可逆开关
+- 设置页「DNS 广告过滤」开关接入
+
+### 11.3 自干扰 bug 修复（关键）
+- 发现 CareShield 曾在 handleAd 里没排除自己，反复拦截/点击自家界面（日志全是 com.careshield.app）
+- 修复：handleAd 首行排除 `com.careshield.app`
+
+### 11.4 版本管理
+- 之后每次打包：更新 版本号 + About 更新内容 + CHANGELOG + README + PROJECT-RECORD
+
+---
+
 *文档更新时间：2026-08-20*
