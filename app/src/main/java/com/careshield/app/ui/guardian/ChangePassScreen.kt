@@ -10,6 +10,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.ui.locale.T
 import android.widget.Toast
 import kotlinx.coroutines.runBlocking
 
@@ -30,24 +31,24 @@ fun ChangePassScreen(onBack: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-            TextButton(onClick = onBack) { Text("‹ 返回") }
+            TextButton(onClick = onBack) { Text(T("‹ 返回")) }
         }
         Spacer(Modifier.height(20.dp))
         Text("🔑", fontSize = 40.sp)
         Spacer(Modifier.height(8.dp))
-        Text("修改监护人密码", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 18.sp)
+        Text(T("修改监护人密码"), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 18.sp)
         Spacer(Modifier.height(24.dp))
 
         OutlinedTextField(value = oldPass, onValueChange = { oldPass = it; error = "" },
-            label = { Text("当前密码") }, visualTransformation = PasswordVisualTransformation(),
+            label = { Text(T("当前密码")) }, visualTransformation = PasswordVisualTransformation(),
             singleLine = true, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(value = newPass, onValueChange = { newPass = it; error = "" },
-            label = { Text("新密码") }, visualTransformation = PasswordVisualTransformation(),
+            label = { Text(T("新密码")) }, visualTransformation = PasswordVisualTransformation(),
             singleLine = true, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(value = newPass2, onValueChange = { newPass2 = it; error = "" },
-            label = { Text("确认新密码") }, visualTransformation = PasswordVisualTransformation(),
+            label = { Text(T("确认新密码")) }, visualTransformation = PasswordVisualTransformation(),
             singleLine = true, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         if (error.isNotEmpty()) {
@@ -68,7 +69,7 @@ fun ChangePassScreen(onBack: () -> Unit) {
                 }
             }
         }, modifier = Modifier.fillMaxWidth()) {
-            Text("确认修改")
+            Text(T("确认修改"))
         }
     }
 }

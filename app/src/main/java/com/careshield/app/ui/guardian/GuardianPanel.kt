@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.ui.locale.T
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -41,8 +42,8 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回", fontSize = 16.sp) }
-            Text("监护人管理", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            TextButton(onClick = onBack) { Text(T("‹ 返回"), fontSize = 16.sp) }
+            Text(T("监护人管理"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)
@@ -53,9 +54,9 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
             Card(Modifier.fillMaxWidth().padding(vertical = 4.dp), shape = RoundedCornerShape(16.dp)) {
                 Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("白名单保护模式", fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
+                        Text(T("白名单保护模式"), fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(2.dp))
-                        Text("开启后仅白名单应用不受拦截，其他一律拦截", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(T("开启后仅白名单应用不受拦截，其他一律拦截"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(checked = whitelistMode, onCheckedChange = { on ->
                         whitelistMode = on

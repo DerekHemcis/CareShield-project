@@ -53,4 +53,20 @@
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
     <string name="password_wrong">Wrong password</string>
+
+    <string name="no_log_desc">No records yet\n\nBlocked ads/popups will show here</string>
+    <string name="export_log">Export log</string>
+    <string name="delete_log">Delete log</string>
+    <string name="confirm_delete">Confirm delete</string>
+    <string name="delete_log_msg">Clear all log entries. This cannot be undone.</string>
+    <string name="defense_func">Protection</string>
+    <string name="enhance_ability">Enhancement</string>
+    <string name="general">General</string>
+    <string name="guardian">Guardian</string>
+    <string name="usage">How to use</string>
+    <string name="backup">Backup</string>
+    <string name="more">More</string>
+    <string name="restore_default">Reset to defaults</string>
+    <string name="select_language">Select language</string>
+    <string name="select_theme">Select theme</string>
 </resources>

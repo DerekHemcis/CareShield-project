@@ -12,6 +12,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.ui.locale.T
 
 /**
  * 监护人验证对话框：默认密码 1234，验证通过后回调 onSuccess
@@ -30,25 +31,25 @@ fun GuardianVerifyDialog(onDismiss: () -> Unit, onSuccess: () -> Unit) {
             Column(Modifier.padding(22.dp)) {
                 Text("🔐", fontSize = 30.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("监护人入口", style = MaterialTheme.typography.titleLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                Text(T("监护人入口"), style = MaterialTheme.typography.titleLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text("请输入监护人密码以管理设置", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(T("请输入监护人密码以管理设置"), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(14.dp))
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it; wrong = false },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
-                    label = { Text("密码") },
+                    label = { Text(T("密码")) },
                     isError = wrong,
-                    supportingText = if (wrong) {{ Text("密码错误") }} else null,
+                    supportingText = if (wrong) {{ Text(T("密码错误")) }} else null,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
-                Text("可联系监护人确认密码", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(T("可联系监护人确认密码"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("返回") }
+                    TextButton(onClick = onDismiss) { Text(T("返回")) }
                     Spacer(Modifier.width(8.dp))
                     Button(onClick = {
                         if (password == storedPass) {
@@ -58,7 +59,7 @@ fun GuardianVerifyDialog(onDismiss: () -> Unit, onSuccess: () -> Unit) {
                             wrong = true
                             Toast.makeText(context, "密码错误", Toast.LENGTH_SHORT).show()
                         }
-                    }) { Text("确认") }
+                    }) { Text(T("确认")) }
                 }
             }
         }

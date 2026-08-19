@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.ui.locale.T
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -32,8 +33,8 @@ fun WhitelistScreen(onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回", fontSize = 16.sp) }
-            Text("白名单应用", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            TextButton(onClick = onBack) { Text(T("‹ 返回"), fontSize = 16.sp) }
+            Text(T("白名单应用"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
         Text(
             "勾选允许老人使用的应用（微信、抖音等）。白名单模式开启后，仅白名单内应用不被拦截。",

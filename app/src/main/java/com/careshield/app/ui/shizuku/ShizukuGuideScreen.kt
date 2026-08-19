@@ -1,4 +1,5 @@
 package com.careshield.app.ui.shizuku
+import com.careshield.app.ui.locale.T
 
 import android.content.Context
 import android.content.Intent
@@ -54,8 +55,8 @@ fun ShizukuGuideScreen(onBack: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回") }
-            Text("Shizuku 引导", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            TextButton(onClick = onBack) { Text(T("‹ 返回")) }
+            Text(T("Shizuku 引导"), fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
         Spacer(Modifier.height(10.dp))
 
@@ -71,42 +72,42 @@ fun ShizukuGuideScreen(onBack: () -> Unit) {
             3 -> {
                 Text("✅", fontSize = 48.sp)
                 Spacer(Modifier.height(10.dp))
-                Text("Shizuku 已就绪", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("增强能力已启用 · 防流氓软件生效", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Text(T("Shizuku 已就绪"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(T("增强能力已启用 · 防流氓软件生效"), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
             1 -> {
                 Text("📱", fontSize = 48.sp)
                 Spacer(Modifier.height(10.dp))
-                Text("开启开发者模式", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(T("开启开发者模式"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 GuideCard {
-                    Text("1. 点击下方【去开启】进入开发者选项设置", fontSize = 13.sp)
-                    Text("2. 打开「开发者选项」开关", fontSize = 13.sp)
-                    Text("3. 回到本页，会自动进入下一步", fontSize = 13.sp)
+                    Text(T("1. 点击下方【去开启】进入开发者选项设置"), fontSize = 13.sp)
+                    Text(T("2. 打开「开发者选项」开关"), fontSize = 13.sp)
+                    Text(T("3. 回到本页，会自动进入下一步"), fontSize = 13.sp)
                 }
                 Spacer(Modifier.height(14.dp))
                 Button(onClick = { openDevSettings(context) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("去开启开发者模式")
+                    Text(T("去开启开发者模式"))
                 }
             }
             else -> {
                 Text("📡", fontSize = 48.sp)
                 Spacer(Modifier.height(10.dp))
-                Text("开启无线调试", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(T("开启无线调试"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     GuideCard {
-                        Text("1. 点击下方【去开启】进入无线调试", fontSize = 13.sp)
-                        Text("2. 打开「无线调试」开关", fontSize = 13.sp)
-                        Text("3. 点击「使用配对码配对」，配对 Shizuku", fontSize = 13.sp)
-                        Text("4. 让电脑/监护人用 adb 配对即可", fontSize = 13.sp)
+                        Text(T("1. 点击下方【去开启】进入无线调试"), fontSize = 13.sp)
+                        Text(T("2. 打开「无线调试」开关"), fontSize = 13.sp)
+                        Text(T("3. 点击「使用配对码配对」，配对 Shizuku"), fontSize = 13.sp)
+                        Text(T("4. 让电脑/监护人用 adb 配对即可"), fontSize = 13.sp)
                     }
                 } else {
                     GuideCard {
-                        Text("Android 10 及以下：开启「USB 调试」后用电脑连接配对", fontSize = 13.sp)
+                        Text(T("Android 10 及以下：开启「USB 调试」后用电脑连接配对"), fontSize = 13.sp)
                     }
                 }
                 Spacer(Modifier.height(14.dp))
                 Button(onClick = { openWirelessDebug(context) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("去开启无线调试")
+                    Text(T("去开启无线调试"))
                 }
             }
         }

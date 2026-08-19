@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CareShield 親安盾</string>
+    <string name="accessibility_service_label">親安盾守護服務</string>
+    <string name="accessibility_service_desc">自動跳過廣告、關閉騷擾彈窗、攔截誤觸下載、識別並阻止流氓軟體，保護家人安全上網。</string>
+    <string name="tagline">親安盾 · 守護模式</string>
+    <string name="status_running">無障礙服務運行中</string>
+    <string name="status_off">無障礙服務未開啟</string>
+    <string name="hero_title">守護中 · 請放心</string>
+    <string name="hero_sub">已為家人攔截廣告與流氓軟體打擾</string>
+    <string name="stat_ad">今日攔截廣告</string>
+    <string name="stat_pop">誤觸彈窗攔截</string>
+    <string name="stat_dl">防裝軟體</string>
+    <string name="shizuku_not_connected">Shizuku 未連接</string>
+    <string name="shizuku_not_connected_desc">高級攔截能力未開啟，防流氓軟體功能已降級</string>
+    <string name="go_enable">去開啟</string>
+    <string name="shizuku_connected">Shizuku 已連接</string>
+    <string name="shizuku_connected_desc">高級攔截能力正常 · 防流氓軟體已啟用</string>
+    <string name="func_skip_ad">自動跳過廣告</string>
+    <string name="func_skip_ad_desc">開屏廣告 · 貼片廣告自動點「跳過」</string>
+    <string name="func_close_pop">彈窗自動關閉</string>
+    <string name="func_close_pop_desc">識別「關閉/×」關閉騷擾彈窗</string>
+    <string name="func_misclick">防誤觸下載</string>
+    <string name="func_misclick_desc">攔截跳轉應用商店下載頁</string>
+    <string name="func_rouge">流氓軟體攔截</string>
+    <string name="func_rouge_desc">Shizuku 增強 · 阻止安裝惡意應用</string>
+    <string name="nav_home">功能</string>
+    <string name="nav_settings">設定</string>
+    <string name="nav_logs">日誌</string>
+    <string name="nav_about">關於</string>
+    <string name="guardian_entry">監護人入口</string>
+    <string name="guardian_entry_desc">管理白名單 · 權限 · 防護設定</string>
+    <string name="whitelist_mode">白名單使用模式</string>
+    <string name="check_update">檢查更新</string>
+    <string name="language">語言</string>
+    <string name="theme">主題設定</string>
+    <string name="theme_system">跟隨系統</string>
+    <string name="theme_light">淺色</string>
+    <string name="theme_dark">深色</string>
+    <string name="liquid_glass">液態玻璃效果</string>
+    <string name="liquid_glass_off_desc">關閉以使用經典介面</string>
+    <string name="shizuku_title">Shizuku 增強</string>
+    <string name="guardian_verify">請輸入監護人密碼</string>
+    <string name="guardian_pass_hint">密碼預設為 1234，可修改</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">取消</string>
+    <string name="password_wrong">密碼錯誤，請重試</string>
+
+    <!-- 界面常用补充 -->
+    <string name="no_log_desc">暫無攔截記錄\n\n攔截廣告/彈窗後，這裡會顯示時間與內容</string>
+    <string name="export_log">導出日誌</string>
+    <string name="delete_log">刪除日誌</string>
+    <string name="confirm_delete">確認刪除</string>
+    <string name="delete_log_msg">將清空全部攔截日誌，此操作不可恢復。</string>
+    <string name="defense_func">防護功能</string>
+    <string name="enhance_ability">增強能力</string>
+    <string name="general">通用</string>
+    <string name="guardian">監護</string>
+    <string name="usage">使用方法</string>
+    <string name="backup">備份</string>
+    <string name="more">更多</string>
+    <string name="restore_default">恢復預設設定</string>
+    <string name="select_language">選擇語言</string>
+    <string name="select_theme">選擇主題</string>
+</resources>

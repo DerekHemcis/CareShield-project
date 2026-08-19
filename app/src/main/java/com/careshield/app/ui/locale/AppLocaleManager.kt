@@ -20,25 +20,14 @@ object AppLocaleManager {
 
     val LOCALE_OPTIONS = listOf("简体中文", "繁體中文", "English")
 
-    /** 应用当前语言（每次进入 App 或恢复默认时调用） */
+    /** 应用当前语言（进入 App 时调用） */
     fun applyLocale(context: Context) {
-        val lang = runCatching {
-            kotlinx.coroutines.runBlocking { SettingsRepo(context).get("lang", "简体中文") }
-        }.getOrDefault("简体中文")
-        val tag = LOCALES[lang] ?: "zh"
-        try {
-            AppCompatDelegate.setApplicationLocales(
-                androidx.core.os.LocaleListCompat.forLanguageTags(tag + if (tag == "zh-Hant") "" else "")
-            )
-        } catch (_: Exception) { }
+        syncLangState(context)
     }
 
-    /** 切换语言（写入 DataStore + 应用） */
+    /** 切换语言（写入 DataStore + 更新 LangState → 触发全局重建） */
     suspend fun setLocale(context: Context, lang: String) {
         SettingsRepo(context).put("lang", lang)
-        val tag = LOCALES[lang] ?: "zh"
-        AppCompatDelegate.setApplicationLocales(
-            androidx.core.os.LocaleListCompat.forLanguageTags(tag)
-        )
+        LangState.current.value = lang   // 触发 MainActivity 重建
     }
 }

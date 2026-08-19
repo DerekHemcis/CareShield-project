@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.ui.locale.T
 import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -39,8 +40,8 @@ fun LogScreen() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
-            Text("拦截日志", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text("共 ${entries.size} 条", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(T("拦截日志"), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(T("共 ${entries.size} 条"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         // 操作按钮：导出 / 删除
         var showClearConfirm by remember { mutableStateOf(false) }
@@ -64,26 +65,26 @@ fun LogScreen() {
                     toast(context, "导出失败")
                 }
             }, modifier = Modifier.weight(1f)) {
-                Text("导出日志", fontSize = 13.sp)
+                Text(T("导出日志"), fontSize = 13.sp)
             }
             OutlinedButton(onClick = { showClearConfirm = true }, modifier = Modifier.weight(1f)) {
-                Text("删除日志", fontSize = 13.sp)
+                Text(T("删除日志"), fontSize = 13.sp)
             }
         }
         if (showClearConfirm) {
             AlertDialog(
                 onDismissRequest = { showClearConfirm = false },
-                title = { Text("确认删除") },
-                text = { Text("将清空全部拦截日志，此操作不可恢复。") },
+                title = { Text(T("确认删除")) },
+                text = { Text(T("将清空全部拦截日志，此操作不可恢复。")) },
                 confirmButton = {
                     TextButton(onClick = {
                         showClearConfirm = false
                         runBlocking { repo.clearLog() }
                         entries = emptyList()
                         toast(context, "日志已清空")
-                    }) { Text("删除") }
+                    }) { Text(T("删除")) }
                 },
-                dismissButton = { TextButton(onClick = { showClearConfirm = false }) { Text("取消") } }
+                dismissButton = { TextButton(onClick = { showClearConfirm = false }) { Text(T("取消")) } }
             )
         }
 
@@ -105,7 +106,7 @@ fun LogScreen() {
                                     Text(e.time, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Spacer(Modifier.height(2.dp))
-                                Text("拦截：${e.action}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(T("拦截：${e.action}"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }

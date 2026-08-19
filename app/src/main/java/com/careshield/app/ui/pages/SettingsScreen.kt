@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.ui.locale.T
 import com.careshield.app.shizuku.ShizukuManager
 import com.careshield.app.ui.guardian.GuardianVerifyDialog
 import com.careshield.app.ui.guardian.GuardianPanelScreen
@@ -92,14 +93,14 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
             Row(Modifier.fillMaxWidth().clickable { showResetConfirm = true }.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("↺", fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(10.dp))
-                Text("恢复默认设置", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Text("重置", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                Text(T("恢复默认设置"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(T("重置"), fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
             }
         }
         if (showResetConfirm) {
             AlertDialog(
                 onDismissRequest = { showResetConfirm = false },
-                title = { Text("恢复默认") },
+                title = { Text(T("恢复默认")) },
                 text = { Text("将恢复出厂默认设置：\n• 全部拦截功能关闭\n• 液态玻璃关闭\n• 主题跟随系统\n• 语言简体中文\n（无障碍服务状态不受影响）") },
                 confirmButton = {
                     TextButton(onClick = {
@@ -108,9 +109,9 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
                         resetCounter++          // 强制界面重建，立即反映默认值
                         onThemeChange(0)         // 主题恢复跟随系统
                         toast(context, "已恢复默认设置")
-                    }) { Text("确认") }
+                    }) { Text(T("确认")) }
                 },
-                dismissButton = { TextButton(onClick = { showResetConfirm = false }) { Text("取消") } }
+                dismissButton = { TextButton(onClick = { showResetConfirm = false }) { Text(T("取消")) } }
             )
         }
     }
@@ -120,7 +121,7 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     if (showLangDialog) {
         AlertDialog(
             onDismissRequest = { showLangDialog = false },
-            title = { Text("选择语言") },
+            title = { Text(T("选择语言")) },
             text = {
                 Column {
                     LangOption("简体中文", langLabel == "简体中文") { langLabel = "简体中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "简体中文") }; showLangDialog = false }
@@ -137,7 +138,7 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     if (showThemeDialog) {
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
-            title = { Text("选择主题") },
+            title = { Text(T("选择主题")) },
             text = {
                 Column {
                     ThemeOption("跟随系统", 0, theme, onThemeChange) { showThemeDialog = false }
@@ -206,8 +207,8 @@ internal fun GuardianEntryCard(onClick: () -> Unit) {
             Text("🔐", fontSize = 24.sp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("监护人入口", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("白名单 + 密码管理", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(T("监护人入口"), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(T("白名单 + 密码管理"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text("›", fontSize = 18.sp)
         }

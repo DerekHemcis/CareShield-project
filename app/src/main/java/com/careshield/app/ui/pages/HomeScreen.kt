@@ -18,12 +18,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.R
+import com.careshield.app.ui.locale.T
 import com.careshield.app.accessibility.AdBlockerService
 import com.careshield.app.shizuku.ShizukuManager
 
@@ -77,28 +80,28 @@ fun HomeScreen(
                     Box(Modifier.size(width = 30.dp, height = 3.dp).clip(RoundedCornerShape(2.dp)).background(primary.copy(alpha = 0.35f)))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        if (a11yOn) "无障碍服务运行中" else "无障碍服务未开启",
+                        if (a11yOn) stringResource(R.string.status_running) else stringResource(R.string.status_off),
                         style = MaterialTheme.typography.labelMedium,
                         color = primary.copy(alpha = 0.9f),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
                 Spacer(Modifier.height(12.dp))
-                Text("守护中 · 请放心", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.hero_title), fontSize = 25.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(Modifier.height(6.dp))
-                Text("已为家人拦截广告与流氓软件打扰", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.hero_sub), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth()) {
-                    StatCell(Modifier.weight(1f), counts[0].toString(), "今日拦截广告")
+                    StatCell(Modifier.weight(1f), counts[0].toString(), stringResource(R.string.stat_ad))
                     Spacer(Modifier.width(10.dp))
-                    StatCell(Modifier.weight(1f), counts[1].toString(), "误触弹窗拦截")
+                    StatCell(Modifier.weight(1f), counts[1].toString(), stringResource(R.string.stat_pop))
                     Spacer(Modifier.width(10.dp))
-                    StatCell(Modifier.weight(1f), counts[2].toString(), "防装软件")
+                    StatCell(Modifier.weight(1f), counts[2].toString(), stringResource(R.string.stat_dl))
                 }
             }
         }
 
-        // 无障碍服务引导卡（未开启时显示，带"去开启"按钮）
+        // 无障碍服务引导卡（未开启时显示，带stringResource(R.string.go_enable)按钮）
         if (!a11yOn) {
             AccessibilityGuideCard(onOpenAccessibility)
         }
@@ -112,8 +115,8 @@ fun HomeScreen(
 
         // 功能开关
         HomeSectionTitle("功能")
-        FeatureSwitch("自动跳过广告", "开屏广告 · 贴片广告自动点「跳过」", "func_skip_ad", repo)
-        FeatureSwitch("弹窗自动关闭", "识别「关闭/×」关闭骚扰弹窗", "func_close_pop", repo)
+        FeatureSwitch(stringResource(R.string.func_skip_ad), stringResource(R.string.func_skip_ad_desc), "func_skip_ad", repo)
+        FeatureSwitch(stringResource(R.string.func_close_pop), "识别「关闭/×」关闭骚扰弹窗", "func_close_pop", repo)
         FeatureSwitch("防误触下载", "拦截跳转应用商店下载页", "func_misclick", repo)
         FeatureSwitch("流氓软件拦截", "Shizuku 增强 · 阻止安装恶意应用", "func_rouge", repo, needsShizuku = true)
     }
@@ -147,12 +150,12 @@ private fun AccessibilityGuideCard(onOpen: () -> Unit) {
             Text("♿", fontSize = 26.sp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("开启无障碍服务", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = s.onSecondaryContainer)
+                Text(stringResource(R.string.enable_accessibility), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = s.onSecondaryContainer)
                 Spacer(Modifier.height(2.dp))
-                Text("需要在系统设置中开启「亲安盾守护服务」才能自动拦截广告", fontSize = 11.sp, color = s.onSecondaryContainer.copy(alpha = 0.7f))
+                Text(stringResource(R.string.enable_accessibility_desc), fontSize = 11.sp, color = s.onSecondaryContainer.copy(alpha = 0.7f))
             }
             Button(onClick = onOpen, colors = ButtonDefaults.buttonColors(containerColor = s.primary)) {
-                Text("去开启", color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.go_enable), color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -168,11 +171,11 @@ private fun ShizukuWarnCard(onOpenShizuku: () -> Unit) {    Card(
             Text("⚠️", fontSize = 22.sp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Shizuku 未连接", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("高级拦截能力未开启，防流氓软件功能已降级", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.shizuku_not_connected), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.shizuku_not_connected_desc), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Button(onClick = onOpenShizuku, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE28A2A))) {
-                Text("去连接", fontWeight = FontWeight.Bold, color = Color.White)
+                Text(T("去连接"), fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
@@ -189,8 +192,8 @@ private fun ShizukuConnectingCard() {
             Text("⏳", fontSize = 22.sp)
             Spacer(Modifier.width(12.dp))
             Column {
-                Text("Shizuku 连接中", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("请在系统弹窗中允许授权", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.shizuku_connecting), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(stringResource(R.string.shizuku_connecting_desc), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -207,8 +210,8 @@ private fun ShizukuOkCard() {
             Text("✅", fontSize = 22.sp)
             Spacer(Modifier.width(12.dp))
             Column {
-                Text("Shizuku 已连接", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
-                Text("高级拦截能力正常 · 防流氓软件已启用", fontSize = 11.sp, color = Color(0xFFC9E8DA))
+                Text(stringResource(R.string.shizuku_connected), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.White)
+                Text(stringResource(R.string.shizuku_connected_desc), fontSize = 11.sp, color = Color(0xFFC9E8DA))
             }
         }
     }
@@ -239,7 +242,7 @@ private fun FeatureSwitch(title: String, desc: String, prefKey: String, repo: Se
                 Spacer(Modifier.height(2.dp))
                 Text(desc, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (needsShizuku) {
-                    Text("需 Shizuku 增强", fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.func_needs_shizuku), fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)
                 }
             }
             androidx.compose.material3.Switch(
