@@ -124,9 +124,9 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
             title = { Text(T("选择语言")) },
             text = {
                 Column {
-                    LangOption("简体中文", langLabel == "简体中文") { langLabel = "简体中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "简体中文") }; showLangDialog = false }
-                    LangOption("繁體中文", langLabel == "繁體中文") { langLabel = "繁體中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "繁體中文") }; showLangDialog = false }
-                    LangOption("English", langLabel == "English") { langLabel = "English"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "English") }; showLangDialog = false }
+                    LangOption("简体中文", langLabel == "简体中文") { langLabel = "简体中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "简体中文") }; showLangDialog = false; (context as? android.app.Activity)?.recreate() }
+                    LangOption("繁體中文", langLabel == "繁體中文") { langLabel = "繁體中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "繁體中文") }; showLangDialog = false; (context as? android.app.Activity)?.recreate() }
+                    LangOption("English", langLabel == "English") { langLabel = "English"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "English") }; showLangDialog = false; (context as? android.app.Activity)?.recreate() }
                 }
             },
             confirmButton = {},

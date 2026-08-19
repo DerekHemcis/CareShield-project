@@ -54,12 +54,6 @@ class MainActivity : ComponentActivity() {
                     shizukuState = shizukuState.value
                 )
             }
-            // 语言切换后自动重建界面（全局即时生效）
-            androidx.compose.runtime.LaunchedEffect(com.careshield.app.ui.locale.LangState.current.value) {
-                if (com.careshield.app.ui.locale.LangState.current.value.isNotEmpty()) {
-                    recreate()
-                }
-            }
         }
     }
 
