@@ -24,19 +24,30 @@ class AdBlockerService : AccessibilityService() {
         if (now - cooldown < 100) return
         cooldown = now
 
-        // 【已移除诊断探针：达到验证目的，且会刷屏影响性能】
-
-        val repo = SettingsRepo(this)
-        val skipAd = repo.isEnabledSync("func_skip_ad")
-        val closePop = repo.isEnabledSync("func_close_pop")
-        val swipeAd = repo.isEnabledSync("func_misclick")
-        if (!skipAd && !closePop && !swipeAd) return
+        // 使用缓存的开关状态（避免每次事件 runBlocking 读 DataStore 造成掉帧）
+        // 每 2 秒刷新一次缓存
+        if (now - cacheTime > 2000) {
+            refreshSwitchCache()
+        }
+        if (!cachedSkipAd && !cachedClosePop && !cachedSwipeAd) return
 
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
             event.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return
 
         val root = rootInActiveWindow ?: return
-        handleAd(root, skipAd, closePop, swipeAd)
+        handleAd(root, cachedSkipAd, cachedClosePop, cachedSwipeAd)
+    }
+
+    @Volatile private var cachedSkipAd = false
+    @Volatile private var cachedClosePop = false
+    @Volatile private var cachedSwipeAd = false
+    @Volatile private var cacheTime = 0L
+
+    private fun refreshSwitchCache() {
+        val repo = SettingsRepo(this)
+        cachedSkipAd = repo.isEnabledSync("func_skip_ad")
+        cachedClosePop = repo.isEnabledSync("func_close_pop")
+        cachedSwipeAd = repo.isEnabledSync("func_misclick")
     }
 
     private fun handleAd(root: AccessibilityNodeInfo, skipAd: Boolean, closePop: Boolean, swipeAd: Boolean) {

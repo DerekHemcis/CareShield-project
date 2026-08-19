@@ -34,6 +34,12 @@ fun MainShell(
     shizukuState: Int = 0
 ) {
     var tab by remember { mutableStateOf(0) }
+    // 液态玻璃开关（从 DataStore 读，决定导航样式）
+    var liquidGlass by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        liquidGlass = com.careshield.app.data.SettingsRepo(androidx.compose.ui.platform.LocalContext.current)
+            .isEnabledSync("liquid_glass")
+    }
 
     val items = listOf(
         NavItem(T("功能"), Icons.Filled.Home, "🏠"),
@@ -94,6 +100,7 @@ fun MainShell(
             items = items,
             selectedIndex = tab,
             onSelected = { tab = it },
+            liquidGlass = liquidGlass,
             modifier = Modifier.padding(bottom = 8.dp)
         )
     }
