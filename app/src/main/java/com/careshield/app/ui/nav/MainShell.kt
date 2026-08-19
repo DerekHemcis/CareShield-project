@@ -36,9 +36,9 @@ fun MainShell(
     var tab by remember { mutableStateOf(0) }
     // 液态玻璃开关（从 DataStore 读，决定导航样式）
     var liquidGlass by remember { mutableStateOf(true) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(Unit) {
-        liquidGlass = com.careshield.app.data.SettingsRepo(androidx.compose.ui.platform.LocalContext.current)
-            .isEnabledSync("liquid_glass")
+        liquidGlass = com.careshield.app.data.SettingsRepo(ctx).isEnabledSync("liquid_glass")
     }
 
     val items = listOf(
