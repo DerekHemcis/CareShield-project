@@ -18,8 +18,8 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.careshield.app.ui.locale.T
 import com.careshield.app.ui.pages.HomeScreen
 import com.careshield.app.ui.pages.SettingsScreen
 import com.careshield.app.ui.pages.LogScreen
@@ -36,10 +36,10 @@ fun MainShell(
     var tab by remember { mutableStateOf(0) }
 
     val items = listOf(
-        NavItem(stringResource(com.careshield.app.R.string.nav_home), Icons.Filled.Home, "🏠"),
-        NavItem(stringResource(com.careshield.app.R.string.nav_settings), Icons.Filled.Settings, "⚙️"),
-        NavItem(stringResource(com.careshield.app.R.string.nav_logs), Icons.AutoMirrored.Filled.List, "📋"),
-        NavItem(stringResource(com.careshield.app.R.string.nav_about), Icons.Filled.Info, "ℹ️"),
+        NavItem(T("功能"), Icons.Filled.Home, "🏠"),
+        NavItem(T("设置"), Icons.Filled.Settings, "⚙️"),
+        NavItem(T("日志"), Icons.AutoMirrored.Filled.List, "📋"),
+        NavItem(T("关于"), Icons.Filled.Info, "ℹ️"),
     )
 
     Column(Modifier.fillMaxSize()) {
