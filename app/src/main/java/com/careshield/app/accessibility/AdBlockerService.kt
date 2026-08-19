@@ -56,6 +56,9 @@ class AdBlockerService : AccessibilityService() {
         val pkg = packageName ?: return
         val repo = SettingsRepo(this)
 
+        // 关键：绝不拦截/干扰 CareShield 自己（避免自识别自点击）
+        if (pkg == "com.careshield.app") return
+
         // 单机/离线/工具类应用基本无广告：跳过拦截，避免误杀（如计算器、相册、日历、输入法）
         if (isNoAdApp(pkg)) return
         // 微信本体：广告较少，仅保留"跳过"级拦截，不做激进弹窗/箭头处理
