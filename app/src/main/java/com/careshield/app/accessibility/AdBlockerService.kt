@@ -109,7 +109,7 @@ class AdBlockerService : AccessibilityService() {
         }
         // ---- 策略2: 信息流"广告"标签 → 上滑跳过（严格：仅信息流App + 精确广告标签 + 排除自身/无广告App） ----
         if (swipeAd && isFeedApp(packageName ?: "") && hasExactAdTag(root) &&
-            pkg != context.packageName && !isNoAdApp(pkg)) {
+            pkg != "com.careshield.app" && !isNoAdApp(pkg)) {
             performSwipeUp()
         }
 
