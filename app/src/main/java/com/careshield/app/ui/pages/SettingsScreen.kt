@@ -29,9 +29,12 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     // 语言 / 主题选择器状态
     var showLangDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
-    var langLabel by remember { mutableStateOf("简体中文") }
     // 恢复默认后强制刷新界面（key 重建触发各开关重新读取默认值）
     var resetCounter by remember { mutableStateOf(0) }
+    // 语言：从 DataStore 读取实际值，恢复默认(resetCounter变化)时重新读取
+    var langLabel by remember(resetCounter) {
+        mutableStateOf(runBlocking { repo.get("lang", "简体中文") })
+    }
 
     if (showGuardianPanel) {
         GuardianPanelScreen(onBack = { showGuardianPanel = false })
@@ -120,9 +123,9 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
             title = { Text("选择语言") },
             text = {
                 Column {
-                    LangOption("简体中文", langLabel == "简体中文") { langLabel = "简体中文"; showLangDialog = false }
-                    LangOption("繁體中文", langLabel == "繁體中文") { langLabel = "繁體中文"; showLangDialog = false }
-                    LangOption("English", langLabel == "English") { langLabel = "English"; showLangDialog = false }
+                    LangOption("简体中文", langLabel == "简体中文") { langLabel = "简体中文"; runBlocking { repo.put("lang", "简体中文") }; showLangDialog = false }
+                    LangOption("繁體中文", langLabel == "繁體中文") { langLabel = "繁體中文"; runBlocking { repo.put("lang", "繁體中文") }; showLangDialog = false }
+                    LangOption("English", langLabel == "English") { langLabel = "English"; runBlocking { repo.put("lang", "English") }; showLangDialog = false }
                 }
             },
             confirmButton = {},
