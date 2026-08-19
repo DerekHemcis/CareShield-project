@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careshield.app.data.SettingsRepo
+import com.careshield.app.BuildConfig
 import kotlinx.coroutines.runBlocking
 
 @Composable
@@ -66,11 +67,6 @@ fun AboutScreen() {
             }
         }
         Spacer(Modifier.height(16.dp))
-        Text("版本 1.0.8", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(6.dp))
-        Text("© 2026 DerekHemcis · CareShield 亲安盾", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
-        Text("作者：DerekHemcis", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
-        Spacer(Modifier.height(24.dp))
 
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
@@ -88,6 +84,11 @@ fun AboutScreen() {
         AboutRow("检查更新") { showUpdatePage = true }
         // 备份（单按钮 → 弹导入/导出选项）
         AboutRow("备份") { showBackupDialog = true }
+        Spacer(Modifier.height(24.dp))
+        // 底部：版本 + 版权信息
+        Text("版本 ${BuildConfig.VERSION_NAME}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text("© 2026 DerekHemcis · CareShield 亲安盾", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text("作者：DerekHemcis", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
     }
 
@@ -133,7 +134,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text("CareShield 亲安盾", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text("当前版本：v1.0.7", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("当前版本：v1.0.8", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("已是最新版本", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -143,7 +144,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
         // 更新内容
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
-                Text("v1.0.7 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("v1.0.8 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Text(UPDATE_TEXT, fontSize = 13.sp, lineHeight = 20.sp)
             }
