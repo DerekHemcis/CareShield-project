@@ -279,3 +279,7 @@ PackageManager 加载各应用图标显示。
 ---
 
 *文档更新时间：2026-08-20*
+
+### 11.5 DNS VPN 闪退修复
+- Android 14: VpnService 前台服务需 android:foregroundServiceType="vpn" + startForeground 传 FOREGROUND_SERVICE_TYPE_VPN，否则闪退
+- Manifest 加 foregroundServiceType; DnsVpnService 按 API 传 type
