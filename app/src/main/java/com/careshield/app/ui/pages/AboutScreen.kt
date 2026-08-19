@@ -20,7 +20,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.careshield.app.data.SettingsRepo
-import com.careshield.app.BuildConfig
 import kotlinx.coroutines.runBlocking
 
 @Composable
@@ -86,7 +85,7 @@ fun AboutScreen() {
         AboutRow("备份") { showBackupDialog = true }
         Spacer(Modifier.height(24.dp))
         // 底部：版本 + 版权信息
-        Text("版本 ${BuildConfig.VERSION_NAME}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text("版本 1.0.8", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Text("© 2026 DerekHemcis · CareShield 亲安盾", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Text("作者：DerekHemcis", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
