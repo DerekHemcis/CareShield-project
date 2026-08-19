@@ -184,7 +184,7 @@ private fun GuardianFeatureSwitch(title: String, desc: String, key: String, repo
     Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(title, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
+                Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(2.dp))
                 Text(desc, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -224,7 +224,7 @@ internal fun SectionTitle(t: String) {
 internal fun SettingRow(title: String, value: String, onClick: () -> Unit) {
     Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
         Row(Modifier.fillMaxWidth().clickable { onClick() }.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             Text(value, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("›", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -237,7 +237,7 @@ internal fun SwitchRow(title: String, desc: String, checked: Boolean, onChange: 
     Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 if (desc.isNotEmpty()) Text(desc, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(checked = state, onCheckedChange = { state = it; onChange(it) })
