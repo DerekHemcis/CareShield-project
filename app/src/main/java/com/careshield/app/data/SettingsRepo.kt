@@ -85,12 +85,20 @@ class SettingsRepo(private val context: Context) {
     suspend fun resetDefaults() {
         dataStore.edit { st ->
             listOf("func_skip_ad", "func_close_pop", "func_misclick", "func_block_web",
-                "func_rouge", "whitelist_mode", "liquid_glass").forEach { k ->
+                "func_rouge", "whitelist_mode", "liquid_glass", "func_aggressive_skip").forEach { k ->
                 st[intPreferencesKey(k)] = 0
             }
             st[stringPreferencesKey("theme")] = "0"
             st[stringPreferencesKey("lang")] = "简体中文"
         }
+    }
+
+    // ===== 安全 API key（Virustotal，可留空降级为本地规则） =====
+    private val KEY_API = stringPreferencesKey("vt_api_key")
+    suspend fun getApiKey(): String = dataStore.data.first()[KEY_API] ?: ""
+    fun getApiKeySync(): String = runCatching { runBlocking { getApiKey() } }.getOrDefault("")
+    suspend fun setApiKey(key: String) {
+        dataStore.edit { it[KEY_API] = key }
     }
 
     // 拦截日志（简单追加，存最近 200 条）

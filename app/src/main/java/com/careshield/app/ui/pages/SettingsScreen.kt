@@ -30,6 +30,7 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     // 语言 / 主题选择器状态
     var showLangDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
     // 恢复默认后强制刷新界面（key 重建触发各开关重新读取默认值）
     var resetCounter by remember { mutableStateOf(0) }
     // 语言：从 DataStore 读取实际值，恢复默认(resetCounter变化)时重新读取
@@ -49,6 +50,7 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         // 老人防护开关
         SectionTitle("防护功能")
         GuardianFeatureSwitch(T("自动跳过广告"), T("识别开屏广告并自动点击跳过"), "func_skip_ad", repo, resetCounter)
+        GuardianFeatureSwitch(T("激进跳过(实验)"), "全屏广告+角落倒计时自动点·可能误触", "func_aggressive_skip", repo, resetCounter)
         GuardianFeatureSwitch(T("自动关闭广告弹窗"), T("识别 关闭/× 关闭（需广告上下文）"), "func_close_pop", repo, resetCounter)
         GuardianFeatureSwitch(T("滑屏跳过信息流广告"), T("抖音/快手信息流广告自动上滑"), "func_misclick", repo, resetCounter)
         GuardianFeatureSwitch(T("拦截网页广告跳转"), T("防止误触打开广告网页"), "func_block_web", repo, resetCounter)
@@ -62,6 +64,41 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
             } else {
                 toast(context, "Shizuku 已连接")
             }
+        }
+        // 安全 API key（Virustotal，可留空）
+        var apiKeySet by remember { mutableStateOf(repo.getApiKeySync().isNotBlank()) }
+        SettingRow(
+            if (apiKeySet) "安全识别(已配置)" else "安全 API Key(可选)",
+            if (apiKeySet) "Virustotal key 已设置" else "本地规则兜底"
+        ) { showApiKeyDialog = true }
+        if (showApiKeyDialog) {
+            var keyInput by remember { mutableStateOf(repo.getApiKeySync()) }
+            AlertDialog(
+                onDismissRequest = { showApiKeyDialog = false },
+                title = { Text("Virustotal API Key") },
+                text = {
+                    Column {
+                        Text("填写后启用云端智能识别；留空则用本地关键词/名单兜底。", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedTextField(
+                            value = keyInput,
+                            onValueChange = { keyInput = it },
+                            placeholder = { Text("粘贴 API key") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showApiKeyDialog = false
+                        runBlocking { repo.setApiKey(keyInput.trim()) }
+                        apiKeySet = keyInput.trim().isNotBlank()
+                        toast(context, if (apiKeySet) "已启用云端识别" else "已使用本地兜底")
+                    }) { Text("保存") }
+                },
+                dismissButton = { TextButton(onClick = { showApiKeyDialog = false }) { Text("取消") } }
+            )
         }
 
         // 监护人入口（置于通用上方）

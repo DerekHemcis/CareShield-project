@@ -29,7 +29,7 @@ class AdBlockerService : AccessibilityService() {
         if (now - cacheTime > 2000) {
             refreshSwitchCache()
         }
-        if (!cachedSkipAd && !cachedClosePop && !cachedSwipeAd) return
+        if (!cachedSkipAd && !cachedClosePop && !cachedSwipeAd && !cachedAggressive) return
 
         if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
             event.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return
@@ -41,6 +41,7 @@ class AdBlockerService : AccessibilityService() {
     @Volatile private var cachedSkipAd = false
     @Volatile private var cachedClosePop = false
     @Volatile private var cachedSwipeAd = false
+    @Volatile private var cachedAggressive = false
     @Volatile private var cacheTime = 0L
 
     private fun refreshSwitchCache() {
@@ -48,6 +49,7 @@ class AdBlockerService : AccessibilityService() {
         cachedSkipAd = repo.isEnabledSync("func_skip_ad")
         cachedClosePop = repo.isEnabledSync("func_close_pop")
         cachedSwipeAd = repo.isEnabledSync("func_misclick")
+        cachedAggressive = repo.isEnabledSync("func_aggressive_skip")
     }
 
     private fun handleAd(root: AccessibilityNodeInfo, skipAd: Boolean, closePop: Boolean, swipeAd: Boolean) {
@@ -101,6 +103,10 @@ class AdBlockerService : AccessibilityService() {
             }
         }
 
+        // ---- 激进跳过（可选项 func_aggressive_skip）：全屏广告 + 角落倒计时 ----
+        if (cachedAggressive) {
+            if (aggressiveSkipTry(root, repo)) return
+        }
         // ---- 策略2: 信息流"广告"标签 → 上滑跳过 ----
         if (swipeAd && AD_LABEL.any { hasTextNode(root, it) }) {
             performSwipeUp()
@@ -117,6 +123,47 @@ class AdBlockerService : AccessibilityService() {
      * 防误触下载：检测到"下载/安装/应用商店/立即下载"等误触下载界面时，自动返回退回。
      * 识别到下载/安装语义的按钮或页面，执行返回键，防止老人误触跳转下载。
      */
+    /**
+     * 激进跳过：全屏广告启发式。
+     * 检测：屏幕大部分区域被无文字的大容器(图片/视频广告)占据 + 角落有倒计时数字/小按钮
+     * → 尝试点击右下角/右上角跳过按钮（开屏广告常见位置）。
+     * 仅在 func_aggressive_skip 开启时调用。可能误触，故设为独立可选项。
+     */
+    private fun aggressiveSkipTry(root: AccessibilityNodeInfo, repo: SettingsRepo): Boolean {
+        // 只对视频/内容类App的高频开屏广告生效，工具/设置类不激进
+        if (isNoAdApp(packageName ?: "")) return false
+        // 防抖：避免持续点
+        if (System.currentTimeMillis() - lastAggressive < 3000) return false
+
+        val nodes = mutableListOf<AccessibilityNodeInfo>()
+        collectAll(root, nodes)
+        val screen = android.graphics.Rect()
+        try { rootInActiveWindow?.getBoundsInScreen(screen) } catch (_: Exception) { return false }
+        if (screen.width() <= 0 || screen.height() <= 0) return false
+
+        // 1) 找角落倒计时数字按钮（纯数字或 数字+跳过, 位于屏幕顶部两侧）
+        for (node in nodes) {
+            val t = node.text?.toString() ?: ""
+            if (t.isBlank()) continue
+            // 匹配倒计时数字：s/秒/纯数字 且位于屏幕顶部 1/3、两侧 1/3
+            val isCountdown = REGEX_COUNTDOWN.matches(t.trim()) ||
+                (t.length <= 5 && t.all { it.isDigit() })
+            if (!isCountdown) continue
+            val b = android.graphics.Rect()
+            try { node.getBoundsInScreen(b) } catch (_: Exception) { continue }
+            if (b.top < screen.height() * 0.4 && (b.left < screen.width() * 0.3 || b.right > screen.width() * 0.7)) {
+                val target = findClickableAncestor(node) ?: node
+                lastAggressive = System.currentTimeMillis()
+                clickIfSafe(target, repo, "广告(激进)")
+                return true
+            }
+        }
+        return false
+    }
+
+    @Volatile private var lastAggressive = 0L
+    private val REGEX_COUNTDOWN = Regex("\\d+\\s*(s|秒|后)?|跳过.*\\d|\\d.*跳过")
+
     private fun blockMisclickDownload(root: AccessibilityNodeInfo) {
         val nodes = mutableListOf<AccessibilityNodeInfo>()
         collectAll(root, nodes)
