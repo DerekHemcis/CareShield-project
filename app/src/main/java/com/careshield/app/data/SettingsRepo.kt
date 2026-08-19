@@ -116,6 +116,21 @@ class SettingsRepo(private val context: Context) {
     suspend fun clearLog() {
         dataStore.edit { it.remove(KEY_LOG) }
     }
+    /** 按应用分组拦截统计：返回 (pkg, 拦截数) 降序 */
+    suspend fun getAppInterceptStats(): List<Pair<String, Int>> {
+        val log = get("log", "")
+        val map = LinkedHashMap<String, Int>()
+        for (line in log.lines()) {
+            if (line.isBlank()) continue
+            val parts = line.split('|')
+            if (parts.size < 3) continue
+            val action = parts[2]
+            val pkg = action.substringBefore(" · ").trim().takeIf { it.isNotBlank() } ?: "未知"
+            map[pkg] = (map[pkg] ?: 0) + 1
+        }
+        return map.entries.sortedByDescending { it.value }.map { it.key to it.value }
+    }
+
 
     /** 导出设置为 JSON（用于备份 / 换设备沿用） */
     suspend fun exportSettings(): String {

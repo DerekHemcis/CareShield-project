@@ -229,4 +229,31 @@ AdBlockerService 收到窗口事件即打印 `CareShield: PROBE ...` 日志，�
 
 ---
 
-*文档更新时间：2026-08-19*
+## 十、AdGuard 学习 + DNS 拦截 + 统计页（2026-08-20）
+
+### 10.1 AdGuard 解析与 DNS 拦截（B 路线）
+- 解析 AdGuard v4.13.1 APK：提取其过滤规则库（Adblock Plus 语法 `||域名^`），提取 19334 个广告域名
+- 实现 `DnsBlocker`：内置 3500 个广告域名（res/raw/ad_hosts.txt），经 Shizuku 写入 /etc/hosts → DNS 层拦截广告域名
+- 带标记段（# CareShield-AD-BLOCK-START/END）、备份恢复、enable/disable 开关
+
+### 10.2 日志页 → 统计页（照 HTML + 主题适配）
+- 3 项统计（广告/捆绑软件/请求）+ 分段进度条（橙/黄/灰）
+- 时段弹窗（全时段/24h/7天/30天）
+- 三点菜单：清除统计 / 导出日志(.log)
+- 应用程序列表（图标 + 名称 + 拦截数 + 查看所有）
+- 主题适配：跟随深浅色（非固定黑）
+- 真实数据：getInterceptCounts + 新增 getAppInterceptStats（按 App 分组）
+
+### 10.3 应用列表图标
+PackageManager 加载各应用图标显示。
+
+### 10.4 开关布局调整（用户要求）
+- 首页（功能页）保留完整防护开关
+- 设置页只保留：激进跳过 / 滑屏跳过信息流 / 拦截网页广告跳转
+
+### 10.5 激进跳过（可选项）
+- func_aggressive_skip 开关：全屏广告 + 角落倒计时自动点，默认关，避免误触
+
+---
+
+*文档更新时间：2026-08-20*

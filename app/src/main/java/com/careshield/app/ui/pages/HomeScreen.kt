@@ -113,11 +113,12 @@ fun HomeScreen(
             else -> ShizukuWarnCard(onOpenShizuku)
         }
 
-        // 功能开关
-        HomeSectionTitle("功能")
-        FeatureSwitch(T("自动跳过广告"), T("开屏广告 · 贴片广告自动点「跳过」"), "func_skip_ad", repo)
-        FeatureSwitch(T("弹窗自动关闭"), T("识别「关闭/×」关闭骚扰弹窗"), "func_close_pop", repo)
-        FeatureSwitch(T("防误触下载"), T("拦截跳转应用商店下载页"), "func_misclick", repo)
+        // 防护功能开关（功能页，放 Column 内）
+        HomeSectionTitle("防护功能")
+        FeatureSwitch(T("自动跳过广告"), T("识别开屏广告并自动点击跳过"), "func_skip_ad", repo)
+        FeatureSwitch(T("自动关闭广告弹窗"), T("识别 关闭/× 关闭（需广告上下文）"), "func_close_pop", repo)
+        FeatureSwitch(T("滑屏跳过信息流广告"), T("抖音/快手信息流广告自动上滑"), "func_misclick", repo)
+        FeatureSwitch(T("拦截网页广告跳转"), T("防止误触打开广告网页"), "func_block_web", repo)
         FeatureSwitch(T("流氓软件拦截"), T("Shizuku 增强 · 阻止安装恶意应用"), "func_rouge", repo, needsShizuku = true)
     }
 }
