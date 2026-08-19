@@ -267,7 +267,9 @@ class AdBlockerService : AccessibilityService() {
                 if (anc != null && anc !== node) ok = anc.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             }
             if (ok) {
-                Thread { kotlinx.coroutines.runBlocking { repo.logIntercept(source, action) } }.start()
+                // 记录时带应用作用域（在哪个 app 里拦截）
+                val scopeInfo = "$pkg · ${node.text?.toString() ?: node.contentDescription?.toString() ?: "按钮"}"
+                Thread { kotlinx.coroutines.runBlocking { repo.logIntercept(source, scopeInfo) } }.start()
             } else {
                 android.util.Log.i("CareShield", "点击失败: $action pkg=$pkg")
             }

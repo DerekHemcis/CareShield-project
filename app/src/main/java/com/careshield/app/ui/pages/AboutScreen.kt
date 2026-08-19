@@ -66,7 +66,7 @@ fun AboutScreen() {
             }
         }
         Spacer(Modifier.height(16.dp))
-        Text("版本 1.0.6", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("版本 1.0.7", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(24.dp))
 
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
@@ -130,7 +130,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text("CareShield 亲安盾", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text("当前版本：v1.0.6", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("当前版本：v1.0.7", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("已是最新版本", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -140,7 +140,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
         // 更新内容
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
-                Text("v1.0.6 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("v1.0.7 更新内容", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Text(UPDATE_TEXT, fontSize = 13.sp, lineHeight = 20.sp)
             }

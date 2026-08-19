@@ -255,10 +255,17 @@ private fun FeatureSwitch(title: String, desc: String, prefKey: String, repo: Se
 
 private fun isAccessibilityEnabled(context: Context): Boolean {
     return try {
+        // 方式1：读系统已启用服务字符串（最直接可靠）
+        val expected = "com.careshield.app/com.careshield.app.accessibility.AdBlockerService"
+        val enabledStr = Settings.Secure.getString(
+            context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: return false
+        if (enabledStr.contains(expected)) return true
+        // 方式2：AccessibilityManager 列表比对（兜底）
         val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val expected = ComponentName(context, AdBlockerService::class.java)
-        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-        enabled.any { it.resolveInfo.serviceInfo.packageName == expected.packageName &&
-                     it.resolveInfo.serviceInfo.name == expected.className }
+        val cmp = ComponentName(context, AdBlockerService::class.java)
+        am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK).any {
+            it.resolveInfo.serviceInfo.packageName == cmp.packageName &&
+            it.resolveInfo.serviceInfo.name == cmp.className
+        }
     } catch (_: Exception) { false }
 }

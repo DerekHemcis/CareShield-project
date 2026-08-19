@@ -30,12 +30,15 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     var showLangDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var langLabel by remember { mutableStateOf("简体中文") }
+    // 恢复默认后强制刷新界面（key 重建触发各开关重新读取默认值）
+    var resetCounter by remember { mutableStateOf(0) }
 
     if (showGuardianPanel) {
         GuardianPanelScreen(onBack = { showGuardianPanel = false })
         return
     }
 
+    androidx.compose.runtime.key(resetCounter) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 96.dp)
     ) {
@@ -99,6 +102,8 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
                     TextButton(onClick = {
                         showResetConfirm = false
                         runBlocking { repo.resetDefaults() }
+                        resetCounter++          // 强制界面重建，立即反映默认值
+                        onThemeChange(0)         // 主题恢复跟随系统
                         toast(context, "已恢复默认设置")
                     }) { Text("确认") }
                 },
@@ -106,6 +111,7 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
             )
         }
     }
+    } // key(resetCounter) 结束
 
     // 语言选择器
     if (showLangDialog) {
