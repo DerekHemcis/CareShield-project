@@ -288,3 +288,7 @@ PackageManager 加载各应用图标显示。
 - 编译后运行：VpnService.prepare 在 VPN 已激活时抛 SecurityException → 捕获
 - isVpnRunning 重写（/sys/class/net tun 检测，避免 /proc 崩）
 - DnsVpnService 全 try-catch + establish null 检测
+
+### 11.7 AdGuard 官方域名库接入
+- ad_hosts.txt 从 3500 条扩充到 20194 条（AdGuardSDNSFilter 全量域名，532KB）
+- 覆盖咪咕/腾讯/搜狐/乐视等广告域名命中率提升
