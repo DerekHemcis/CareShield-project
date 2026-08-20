@@ -75,7 +75,7 @@ class DnsVpnService : VpnService() {
                 proxySock.receive(p)
                 val d = ByteArray(p.length)
                 System.arraycopy(buf, 0, d, 0, p.length)
-                if (d.length < 12) continue
+                if (d.size < 12) continue
                 val id = ByteBuffer.wrap(d, 0, 2).short.toInt() and 0xffff
                 val qname = parseQ(d) ?: continue
                 val clientKey = "${p.address.hostAddress}:${p.port}"
@@ -140,7 +140,7 @@ class DnsVpnService : VpnService() {
             bb.put(0)
             bb.putShort(1); bb.putShort(1); bb.putInt(300); bb.putShort(ipB.size.toShort()); bb.put(ipB)
             return ByteArray(bb.position()).also { System.arraycopy(bb.array(),0,it,0,it.size) }
-        } catch (_: Exception) { ByteArray(0) }
+        } catch (_: Exception) { return ByteArray(0) }
     }
 
     private fun isAdDomain(d: String): Boolean {
