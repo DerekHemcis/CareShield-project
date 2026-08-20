@@ -19,21 +19,10 @@ class AdBlockerService : AccessibilityService() {
     @Volatile private var cooldown = 0L
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun onServiceConnected() {
-        super.onServiceConnected()
-        android.util.Log.i("CareShield", "DIAG ServiceConnected, pkg=${packageName}, info=${serviceInfo}")
-    }
-
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val now = System.currentTimeMillis()
         if (now - cooldown < 100) return
         cooldown = now
-
-        // 【诊断】每 800ms 打一条事件接收日志，确认服务是否收到窗口事件
-        if (now - lastRecvLog > 800) {
-            lastRecvLog = now
-            android.util.Log.i("CareShield", "RECV evt=${event.eventType} pkg=${event.packageName}")
-        }
 
         // 使用缓存的开关状态（避免每次事件 runBlocking 读 DataStore 造成掉帧）
         // 每 2 秒刷新一次缓存
@@ -54,7 +43,6 @@ class AdBlockerService : AccessibilityService() {
     @Volatile private var cachedSwipeAd = false
     @Volatile private var cachedAggressive = false
     @Volatile private var cacheTime = 0L
-    @Volatile private var lastRecvLog = 0L
 
     private fun refreshSwitchCache() {
         val repo = SettingsRepo(this)
@@ -68,7 +56,7 @@ class AdBlockerService : AccessibilityService() {
         val pkg = packageName ?: return
         val repo = SettingsRepo(this)
 
-        // 关键：绝不拦截/干扰 CareShield 自己（避免自识别自点击）
+        // 关键：绝不拦截/干扰 CareShield 自己（避免自识别自点击，不影响第三方拦截）
         if (pkg == "com.careshield.app") return
 
         // 单机/离线/工具类应用基本无广告：跳过拦截，避免误杀（如计算器、相册、日历、输入法）
@@ -122,9 +110,8 @@ class AdBlockerService : AccessibilityService() {
         if (cachedAggressive) {
             if (aggressiveSkipTry(root, repo)) return
         }
-        // ---- 策略2: 信息流"广告"标签 → 上滑跳过（严格：仅信息流App + 精确广告标签 + 排除自身/无广告App） ----
-        if (swipeAd && isFeedApp(packageName ?: "") && hasExactAdTag(root) &&
-            pkg != "com.careshield.app" && !isNoAdApp(pkg)) {
+        // ---- 策略2: 信息流"广告"标签 → 上滑跳过 ----
+        if (swipeAd && AD_LABEL.any { hasTextNode(root, it) }) {
             performSwipeUp()
         }
 
@@ -222,7 +209,7 @@ class AdBlockerService : AccessibilityService() {
         // 高置信：含"跳过/Skip"（开屏广告常见，含倒计时如 1s跳过 3跳过 跳过 10；不依赖广告上下文）
         // 不要求节点自身 clickable：匹配后统一找可点击祖先；与倒计时数字绑定，避免误杀日历/时间
         if (skipAd && (combined.contains("跳过") || combined.contains("Skip"))) {
-            score = maxOf(score, SCORE_STRONG)  // 强证据：含"跳过"开屏按钮必拦
+            score = maxOf(score, SCORE_MID)
         }
         // 倒计时+跳过绑定：数字与"跳过"在同一按钮（如 "跳过 10" "3s跳过" "跳过广告 5 秒"）
         if (skipAd && COUNTDOWN_SKIPregex.matches(text.trim())) {
@@ -271,20 +258,6 @@ class AdBlockerService : AccessibilityService() {
             val small = r.width() <= screenW * 0.3f && r.height() <= screenH * 0.12f
             (nearRight || nearLeft) && small
         } catch (_: Exception) { false }
-    }
-
-    private fun isFeedApp(pkg: String): Boolean {
-        return FEED_PKG_PREFIXES.any { pkg.startsWith(it) }
-    }
-
-    private fun hasExactAdTag(root: AccessibilityNodeInfo): Boolean {
-        val nodes = mutableListOf<AccessibilityNodeInfo>()
-        collectAll(root, nodes)
-        return nodes.any { node ->
-            val t = node.text?.toString() ?: ""
-            val d = node.contentDescription?.toString() ?: ""
-            (t == "广告" || d == "广告") && node.className?.toString()?.contains("TextView") == true
-        }
     }
 
     private fun hasTextNode(root: AccessibilityNodeInfo, keyword: String): Boolean {
@@ -392,12 +365,6 @@ class AdBlockerService : AccessibilityService() {
         private val BACK_ANY = listOf("返回", "上一页", "Back", "back", "‹", "‹‹", "←")
 
         private val AD_LABEL = listOf("广告", "推广", "Sponsored", "Ad")
-
-        // 信息流类 App 前缀（上滑跳过仅限这类，防误触其它）
-        private val FEED_PKG_PREFIXES = listOf(
-            "com.ss.android.ugc.aweme", "com.kuaishou", "com.sina.weibo",
-            "com.ss.android.article", "com.xingin.xhs"
-        )
 
         // 无广告/单机/工具类应用前缀（本地工具、系统组件、输入法等，跳过拦截防误杀）
         private val NO_AD_PKGS = listOf(
