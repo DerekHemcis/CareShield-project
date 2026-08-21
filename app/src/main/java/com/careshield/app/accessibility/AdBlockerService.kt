@@ -35,7 +35,20 @@ class AdBlockerService : AccessibilityService() {
             event.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return
 
         val root = rootInActiveWindow ?: return
+        // 先扫活动窗口
         handleAd(root, cachedSkipAd, cachedClosePop, cachedSwipeAd)
+        // 视频类 App 的广告常渲染在"独立窗口"（非活动 root），如腾讯 SplashHomeActivity 上叠加的广告层。
+        // 43 只扫 rootInActiveWindow 所以扫不到 → 拦不住。这里对视频 App 额外遍历所有交互窗口，
+        // 在每个窗口 root 上也跑一遍拦截（原理与中羽/有道完全一致，只是扩大扫描范围）。
+        val pkg = packageName ?: return
+        if (VIDEO_SKIP_COORDS.containsKey(pkg)) {
+            try {
+                for (w in windows) {
+                    val wroot = w.root ?: continue
+                    if (wroot !== root) handleAd(wroot, cachedSkipAd, cachedClosePop, cachedSwipeAd)
+                }
+            } catch (_: Exception) { }
+        }
     }
 
     @Volatile private var cachedSkipAd = false
