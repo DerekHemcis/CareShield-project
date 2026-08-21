@@ -54,6 +54,8 @@ class AdBlockerService : AccessibilityService() {
 
     private fun handleAd(root: AccessibilityNodeInfo, skipAd: Boolean, closePop: Boolean, swipeAd: Boolean) {
         val pkg = packageName ?: return
+        // 绝不动 CareShield 自己界面（避免把自家"跳过"等文字当广告误拦，污染日志）
+        if (pkg == "com.careshield.app") return
         val repo = SettingsRepo(this)
 
         // 单机/离线/工具类应用基本无广告：跳过拦截，避免误杀（如计算器、相册、日历、输入法）
@@ -95,8 +97,11 @@ class AdBlockerService : AccessibilityService() {
 
                 val score = scoreNode(combined, text, node, hasAdContext, skipAd, closePop)
                 if (score >= SCORE_CLICK) {
-                    val target = findClickableAncestor(node) ?: node
                     val source = if (score >= SCORE_STRONG) "广告" else if (skipAd) "广告" else "弹窗"
+                    // 视频类 App（腾讯/搜狐等）：直接点"跳过"文字节点本身中心（bounds=跳过按钮文字位置），
+                    // 避免点可点击祖先(可能是整块广告)导致进广告页。常规 App 走 findClickableAncestor。
+                    val target = if (VIDEO_SKIP_COORDS.containsKey(pkg)) node
+                                 else (findClickableAncestor(node) ?: node)
                     clickIfSafe(target, repo, source)
                     return
                 }
@@ -319,10 +324,11 @@ class AdBlockerService : AccessibilityService() {
         }
         try {
             // 视频类 App（腾讯视频/搜狐视频等）的跳过按钮常为自定义 View，performAction(ACTION_CLICK)
-            // 会返回成功但广告不消失（搜狐已见）。用"校准坐标表 + 节点坐标"双重定位，
-            // 真实系统级坐标手势点击跳过按钮（不影响常规 App 路径）。
+            // 会返回成功但广告不消失（搜狐已见）。用 Shizuku root input tap 真实坐标点击跳过按钮。
             if (VIDEO_SKIP_COORDS.containsKey(pkg)) {
                 coordinateTapOnNode(node, pkg)
+                val scopeInfo = "前台应用 $pkg · ${node.text?.toString() ?: node.contentDescription?.toString() ?: "跳过按钮"}"
+                Thread { kotlinx.coroutines.runBlocking { repo.logIntercept("广告(坐标点击)", scopeInfo) } }.start()
                 return
             }
 
@@ -343,48 +349,63 @@ class AdBlockerService : AccessibilityService() {
     }
 
     /**
-     * 用系统级真实触摸手势（dispatchGesture）在指定坐标点击。
-     * 优先使用"校准坐标表"（按 App + 分辨率人工校准的开屏跳过按钮位置），
-     * 校准表没有时才退回用节点 bounds 中心。连续点多次提升成功率。
+     * 视频类 App 开屏"跳过"按钮：用系统级真实触摸注入坐标点击。
+     * 优先走 Shizuku root `input tap`（ColorOS 上无障碍 dispatchGesture 常无法真正注入，
+     * 腾讯视频用 dispatchGesture 实测跳过无效；root input tap 绕过一切，必能命中）。
+     * Shizuku 不可用时退回 dispatchGesture。连续点多次提升成功率。
      */
     private fun coordinateTapOnNode(node: AccessibilityNodeInfo, pkg: String? = null): Boolean {
         return try {
-            // 1) 优先用校准坐标表
+            // 1) 优先用节点（传入的"跳过"文字节点）bounds 中心 —— 最准，就是按钮文字位置
             var cx = -1f; var cy = -1f
             val pk = pkg ?: packageName ?: ""
-            val coord = VIDEO_SKIP_COORDS[pk]
-            if (coord != null && coord.first > 0 && coord.second > 0) {
-                cx = coord.first.toFloat()
-                cy = coord.second.toFloat()
-                android.util.Log.i("CareShield", "使用校准坐标 跳过按钮($cx,$cy) pkg=$pk")
-            } else if (coord != null) {
-                android.util.Log.i("CareShield", "该App坐标未校准($pk)，退回节点bounds点击")
-            }
-            // 2) 若校准坐标无效，退回节点 bounds 中心
-            if (cx < 0 || cy < 0) {
-                val r = android.graphics.Rect()
+            val r = android.graphics.Rect()
+            try {
                 node.getBoundsInScreen(r)
-                if (r.isEmpty || r.width() <= 0 || r.height() <= 0) {
-                    android.util.Log.i("CareShield", "坐标点击节点无效bounds pkg=$pk")
+                if (!r.isEmpty && r.width() > 0 && r.height() > 0) {
+                    cx = (r.left + r.width() / 2).toFloat()
+                    cy = (r.top + r.height() / 2).toFloat()
+                }
+            } catch (_: Exception) { }
+
+            // 2) 节点无效时才用校准坐标表兜底
+            if (cx < 0 || cy < 0) {
+                val coord = VIDEO_SKIP_COORDS[pk]
+                if (coord != null && coord.first > 0 && coord.second > 0) {
+                    cx = coord.first.toFloat(); cy = coord.second.toFloat()
+                    android.util.Log.i("CareShield", "使用校准坐标跳过($cx,$cy) pkg=$pk")
+                } else {
+                    android.util.Log.i("CareShield", "无有效坐标 pkg=$pk")
                     return false
                 }
-                cx = (r.left + r.width() / 2).toFloat()
-                cy = (r.top + r.height() / 2).toFloat()
             }
 
-            // 连续点 3 次，间隔 120ms，提高命中率（开屏跳过的响应有延迟）
-            var dispatched = false
-            for (i in 0 until 3) {
-                val path = Path().apply { moveTo(cx, cy); lineTo(cx + 1, cy + 1) }
-                val gesture = GestureDescription.Builder()
-                    .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
-                    .build()
-                dispatched = dispatchGesture(gesture, null, null)
-                if (!dispatched) break
-                Thread.sleep(120)
+            val ix = cx.toInt(); val iy = cy.toInt()
+            var ok = false
+
+            // 方式A：Shizuku root input tap（最可靠，ColorOS 无障碍手势失效时唯一解法）
+            if (com.careshield.app.shizuku.ShizukuManager.isEnhanceReady()) {
+                for (i in 0 until 3) {
+                    val shOk = com.careshield.app.shizuku.ShizukuManager.execShell("input tap $ix $iy")
+                    if (shOk == null) break
+                    Thread.sleep(120)
+                }
+                ok = true
+                android.util.Log.i("CareShield", "Shizuku root input tap ($ix,$iy) x3 pkg=$pk")
+            } else {
+                // 方式B：dispatchGesture 兜底（Shizuku 未授权时）
+                for (i in 0 until 3) {
+                    val path = Path().apply { moveTo(ix.toFloat(), iy.toFloat()); lineTo(ix.toFloat() + 1, iy.toFloat() + 1) }
+                    val gesture = GestureDescription.Builder()
+                        .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+                        .build()
+                    ok = dispatchGesture(gesture, null, null)
+                    if (!ok) break
+                    Thread.sleep(120)
+                }
+                android.util.Log.i("CareShield", "dispatchGesture 坐标tap ($ix,$iy) pkg=$pk ok=$ok")
             }
-            android.util.Log.i("CareShield", "坐标点击跳过($cx,$cy) x${(if(dispatched)3 else 1)}次 pkg=$pk")
-            dispatched
+            ok
         } catch (e: Exception) {
             android.util.Log.i("CareShield", "坐标点击异常: ${e.message} pkg=$packageName")
             false

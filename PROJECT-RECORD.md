@@ -292,3 +292,45 @@ PackageManager 加载各应用图标显示。
 ### 11.7 AdGuard 官方域名库接入
 - ad_hosts.txt 从 3500 条扩充到 20194 条（AdGuardSDNSFilter 全量域名，532KB）
 - 覆盖咪咕/腾讯/搜狐/乐视等广告域名命中率提升
+
+---
+
+## 十二、无障碍拦截回归 + 视频 App 坐标点击修复（2026-08-21）
+
+> 版本 v1.3.0（versionCode 33）。本轮的教训：给成熟可用的无障碍服务加功能，必须严格隔离到具体 App，绝不能改动公共拦截路径。
+
+### 12.1 v52 失效根因定位
+对比 43 / 52 两版工程，发现 52 版拦截失效三大根因：
+1. **accessibility_service_config.xml 删掉了 `flagIncludeNotImportantViews` 和 `canPerformGestures`** → 看不到"不重要"的广告按钮节点、无法手势 → 拦不住（最根本）。43 版带这两个 flag 所以正常。
+2. **设置页删掉了「自动跳过广告」`func_skip_ad` /「自动关闭弹窗」`func_close_pop` 开关** → 用户无法开启核心拦截。
+3. **manifest 增加 DnsVpnService + MiniA11y 白板**，多余进程/干扰。
+
+### 12.2 v30 的教训：过度改动导致回归
+- 首次尝试曾**改动公共拦截路径**，导致原本能拦的有道/中羽/咪咕全部失效。
+- 结论：**必须完全以 43 版为基座**，常规方法（handleAd/scoreNode/detectAdContext/isCornerNode/findClickableAncestor 等）一字不改。
+
+### 12.3 v32 隔离修复（恢复中羽/有道/咪咕）
+- 常规 App 点击路径完全回归 43 版；仅在命中视频 App 时额外处理。
+- 用户实测：**中羽在线、有道词典、咪咕视频恢复正常拦截。**
+
+### 12.4 v33 视频 App 坐标跳过（针对腾讯/搜狐）
+- 新增 `VIDEO_SKIP_COORDS` 校准坐标表（key=包名，value=跳过按钮中心坐标），实测腾讯 `(982,177)`。
+- `coordinateTapOnNode`：优先点「跳过」文字节点 bounds 中心，无效才用校准坐标；连续点 3 次。
+- **关键升级：优先走 Shizuku root `input tap`**（ColorOS 上 `dispatchGesture` 常无法真正注入触摸，腾讯视频 dispatchGesture 实测跳过无效；root `input tap` 是系统级注入，一定生效）。Shizuku 未授权时才退回 dispatchGesture。
+- 视频 App 命中判断改为 `VIDEO_SKIP_COORDS.containsKey(pkg)`，坐标点击分支记录日志（带前台应用包名，修复此前日志全是 `com.careshield.app` 的混淆）。
+
+### 12.5 真机验证洞察
+- 腾讯视频开屏「跳过」节点可 dump：`Text=跳过 clickable=true bounds=[916,135][1048,219]`（右上角）。
+- 用 root `input tap 982 177` 实测：界面切换且 topResumed 变 `H5Activity` → **点到了广告跳转区进了 H5 推广页**，说明时机/位置需校准，避免误触广告。
+- 结论：坐标点击可行但**必须点「跳过」文字节点中心，且选对时机**（跳过按钮出现后再点），否则会误进广告详情页（H5）。
+
+### 12.6 日志修复
+- `handleAd` 首行排除 `com.careshield.app`（避免把自家界面当广告拦截，日志不再全是 careshield）。
+- 坐标点击分支输出 `前台应用 <pkg> · 跳过`，方便确认在哪个 App 拦截。
+
+### 12.7 版本升级
+- build.gradle `versionCode=33, versionName=1.3.0`；About 页全部改为 v1.3.0。
+
+---
+
+*文档更新时间：2026-08-21*
