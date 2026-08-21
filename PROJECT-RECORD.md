@@ -333,4 +333,34 @@ PackageManager 加载各应用图标显示。
 
 ---
 
+## 十三、液体玻璃导航栏（集成 workbuddy Compose 版，2026-08-21）
+
+> 版本 v1.4.0（versionCode 40）。UI 层重做底部导航，拦截逻辑零改动。
+
+### 13.1 背景
+- 此前自绘的 GlassNavigation 效果一般；用户带来 workbuddy 从 Flutter `ZyadWKhedr/LiquidGlass-NavBar`
+  转写的 Compose 版，要求集成。
+- 要求：点击「液体玻璃效果」开关后**立即生效**（响应式），无需重启。
+
+### 13.2 集成内容
+- 引入 `LiquidGlassNavBar.kt`（workbuddy 转写，包改为 `com.careshield.app.ui.nav`）：
+  - 磨砂玻璃栏：半透明白渐变 + 圆角 + 阴影 + 白色描边
+  - **可水平拖拽、自动吸附最近图标的玻璃药丸指示器**（对应 Flutter 的 NavbarDraggableIndicator）
+  - 跟随指示器的镜面高光（radial gradient）
+  - 指示器宽度自适应 `70 * (3.5/count).coerceIn(1,1.2)`，4 项→70dp
+  - 选中图标放大 + 颜色高亮
+- 删除旧的自绘 `GlassNavigation.kt`
+- `MainShell.kt` 改用 `LiquidGlassNavBar`，保留 AnimatedContent 淡入淡出 + 水平滑动切 tab
+
+### 13.3 液体玻璃开关即时生效（响应式）
+- `SettingsRepo` 新增 `observeEnabled(key): Flow<Boolean>`（`dataStore.data.map{...}`）
+- `MainShell` 用 `repo.observeEnabled("liquid_glass").collectAsState(true)` 订阅
+  → 设置页切换开关时，导航栏立即在「玻璃质感 / 纯色」间切换，无需重启
+- `LiquidGlassNavBar` 增加 `useGlass` 参数：true 玻璃渐变背景 / false 纯 surface
+
+### 13.4 兼容保证
+- 拦截逻辑完全未动（AdBlockerService md5 与 43 一致），中羽/有道/咪咕不受影响
+
+---
+
 *文档更新时间：2026-08-21*

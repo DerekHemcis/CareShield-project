@@ -86,7 +86,7 @@ fun AboutScreen() {
         AboutRow("备份") { showBackupDialog = true }
         Spacer(Modifier.height(24.dp))
         // 底部：版本 + 版权信息
-        Text(T("版本 1.3.0"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text(T("版本 1.4.0"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Text(T("© 2026 DerekHemcis · CareShield 亲安盾"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Text(T("作者：DerekHemcis"), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
@@ -134,7 +134,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text(T("CareShield 亲安盾"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text(T("当前版本：v1.3.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(T("当前版本：v1.4.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(T("已是最新版本"), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -144,7 +144,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
         // 更新内容
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
-                Text(T("v1.3.0 更新内容"), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(T("v1.4.0 更新内容"), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Text(UPDATE_TEXT, fontSize = 13.sp, lineHeight = 20.sp)
             }

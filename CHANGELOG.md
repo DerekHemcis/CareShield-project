@@ -1,5 +1,27 @@
 # CareShield 更新日志
 
+## v1.4.0 (构建 040 — 2026-08-21)
+
+### 液体玻璃导航栏（集成 workbuddy 重写的 Compose 版）
+- **引入 workbuddy 转写的液态玻璃导航栏 `LiquidGlassNavBar`**（源于 Flutter 的
+  ZyadWKhedr/LiquidGlass-NavBar），实现：
+  - 磨砂玻璃栏（半透明白渐变背景 + 圆角 + 阴影）
+  - **可水平拖拽并自动吸附到最近图标的玻璃药丸指示器**
+  - 跟随指示器的镜面高光（radial gradient）
+  - 自适应宽度（按项数 `70 * 3.5/count`）
+  - 选中图标放大 + 颜色高亮
+- **替换旧的自绘 GlassNavigation**（效果一般，已删除）
+- **液体玻璃开关即时生效**：SettingsRepo 新增 `observeEnabled`（Flow），
+  MainShell 用 `collectAsState` 订阅 → 在设置页切换「液态玻璃效果」立即生效（无需重启）。
+  关闭时导航栏回退为纯色 Material 风格背景。
+- 页面切换/手势仍保留（AnimatedContent + 水平滑动切换 tab）
+- versionCode 40 / versionName 1.4.0
+
+### 兼容保证
+- 拦截逻辑零改动（AdBlockerService 与 43 版 md5 一致），中羽/有道/咪咕不受影响
+
+---
+
 ## v1.3.0-clean43 (构建 034 — 2026-08-21)
 
 ### 重要：完全回退到 43 版纯净逻辑
