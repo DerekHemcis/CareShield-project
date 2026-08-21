@@ -1,5 +1,21 @@
 # CareShield 更新日志
 
+## v1.4.1 (构建 041 — 2026-08-21)
+
+### 视频 App 开屏广告拦截（腾讯视频/搜狐视频/爱奇艺/优酷/乐视）
+- 背景：有道/中羽不是我目标人群常刷的，老人更常看腾讯视频、搜狐视频等，这些需要的广告自动跳过。
+- **新增独立方法 `handleVideoAdIfApplicable`**：仅当 packageName 属于视频 App 名单时触发。
+  - **遍历所有交互窗口**（`windows`）找开屏广告的"跳过/倒计时"节点（这些广告常在独立窗口，
+    `rootInActiveWindow` 扫不到，这是此前拦不住腾讯/搜狐的根本）。
+  - 命中后**用 Shizuku root `input tap` 真实坐标点击**跳过按钮（ColorOS 上 `dispatchGesture`
+    常无法真正注入触摸；root `input tap` 是系统级注入，必能命中）。Shizuku 未授权时退回手势。
+  - 连续 tap 两次提升命中率；命中打 logcat + 记录拦截日志（带前台应用 pkg）。
+- **隔离保证**：`handleAd` 及所有常规方法（scoreNode/detectAdContext…）与 43 版完全一致、
+  一字未改 → 中羽/有道/咪咕不受任何影响。
+- versionCode 41 / versionName 1.4.1。
+
+---
+
 ## v1.4.0 (构建 040 — 2026-08-21)
 
 ### 液体玻璃导航栏（集成 workbuddy 重写的 Compose 版）

@@ -36,6 +36,88 @@ class AdBlockerService : AccessibilityService() {
 
         val root = rootInActiveWindow ?: return
         handleAd(root, cachedSkipAd, cachedClosePop, cachedSwipeAd)
+        // 视频类 App（腾讯/搜狐等）：开屏广告常在"独立窗口"（非 rootInActiveWindow），
+        // 43 只扫活动窗口扫不到。额外遍历所有交互窗口找"跳过/广告"，用 Shizuku root input tap 点击。
+        // 完全独立，不触碰常规 App 拦截路径。
+        handleVideoAdIfApplicable(cachedSkipAd, cachedClosePop)
+    }
+
+    // 视频 App 名单（开屏广告需多窗口扫描 + 坐标点击）
+    private val VIDEO_APPS = listOf(
+        "com.tencent.qqlive",      // 腾讯视频
+        "com.sohu.sohuvideo",      // 搜狐视频
+        "com.qiyi.video",          // 爱奇艺
+        "com.youku.phone",         // 优酷
+        "com.letv.android.client"  // 乐视
+    )
+
+    // 用于识别视频App广告"跳过"的节点文本
+    private val VIDEO_SKIP_TEXTS = listOf("跳过", "Close ad", "Skip")
+
+    /**
+     * 仅对视频 App：扫描所有交互窗口，命中"跳过"文字节点后，用 Shizuku root `input tap` 坐标点击。
+     * 独立方法，不影响常规 App 拦截。
+     */
+    private fun handleVideoAdIfApplicable(skipAd: Boolean, closePop: Boolean) {
+        if (!skipAd && !closePop) return
+        val pkg = packageName ?: return
+        if (VIDEO_APPS.none { pkg == it }) return
+        try {
+            for (w in windows) {
+                val wroot = w.root ?: continue
+                val nodes = mutableListOf<AccessibilityNodeInfo>()
+                collectAll(wroot, nodes)
+                for (node in nodes) {
+                    val t = (node.text?.toString() ?: "") + " " + (node.contentDescription?.toString() ?: "")
+                    if (t.isBlank()) continue
+                    val isSkip = VIDEO_SKIP_TEXTS.any { it in t } ||
+                        (skipAd && (COUNTDOWN_SKIPregex.matches(t.trim()) ||
+                            (t.length <= 4 && t.trim().any { it.isDigit() })))
+                    if (!isSkip) continue
+                    // 用坐标点击"跳过"文字节点中心
+                    val r = android.graphics.Rect()
+                    try { node.getBoundsInScreen(r) } catch (_: Exception) { continue }
+                    if (r.isEmpty || r.width() <= 0 || r.height() <= 0) continue
+                    val cx = (r.left + r.width() / 2).toInt()
+                    val cy = (r.top + r.height() / 2).toInt()
+                    android.util.Log.i("CareShield", "视频App广告命中[$pkg] '$t' at ($cx,$cy)")
+                    videoTap(cx, cy)
+                    Thread { kotlinx.coroutines.runBlocking {
+                        SettingsRepo(this@AdBlockerService).logIntercept("广告(视频坐标)", "$pkg · $t")
+                    } }.start()
+                    return
+                }
+            }
+        } catch (_: Exception) { }
+    }
+
+    @Volatile private var lastVideoTap = 0L
+
+    /** 用 Shizuku root `input tap` 注入真实触摸（ColorOS 上 dispatchGesture 不可靠）；失败退回手势 */
+    private fun videoTap(x: Int, y: Int) {
+        val now = System.currentTimeMillis()
+        if (now - lastVideoTap < 1500) return
+        lastVideoTap = now
+        var ok = false
+        try {
+            if (com.careshield.app.shizuku.ShizukuManager.isEnhanceReady()) {
+                com.careshield.app.shizuku.ShizukuManager.execShell("input tap $x $y")
+                com.careshield.app.shizuku.ShizukuManager.execShell("input tap $x $y")
+                ok = true
+                android.util.Log.i("CareShield", "Shizuku input tap ($x,$y)")
+            }
+        } catch (_: Exception) { }
+        if (!ok) {
+            // 兜底：dispatchGesture 坐标点击
+            try {
+                val path = Path().apply { moveTo(x.toFloat(), y.toFloat()); lineTo(x.toFloat() + 1, y.toFloat() + 1) }
+                val g = GestureDescription.Builder()
+                    .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+                    .build()
+                dispatchGesture(g, null, null)
+                android.util.Log.i("CareShield", "dispatchGesture tap ($x,$y)")
+            } catch (_: Exception) { }
+        }
     }
 
     @Volatile private var cachedSkipAd = false
