@@ -111,12 +111,6 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         // 主题：点击弹选择器
         val themeMap = listOf("跟随系统", "浅色", "深色")
         SettingRow("主题设置", themeMap.getOrElse(theme) { "跟随系统" }) { showThemeDialog = true }
-        // 液态玻璃开关
-        var liquidOn by remember(resetCounter) { mutableStateOf(repo.isEnabledSync("liquid_glass")) }
-        SwitchRow("液态玻璃效果", "关闭以使用经典界面", liquidOn) { on ->
-            liquidOn = on
-            runBlocking { repo.setEnabled("liquid_glass", on) }
-        }
 
         // 恢复默认
         var showResetConfirm by remember { mutableStateOf(false) }

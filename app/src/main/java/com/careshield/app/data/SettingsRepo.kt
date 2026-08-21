@@ -10,7 +10,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 
 val Context.dataStore by preferencesDataStore(name = "careshield_settings")
@@ -52,10 +51,6 @@ class SettingsRepo(private val context: Context) {
     fun isEnabledSync(key: String): Boolean {
         return try { runBlocking { isEnabled(key) } } catch (_: Exception) { false }
     }
-
-    /** 响应式观察某个开关：DataStore 变化即时发流（用于 UI 中开关立即生效，如液态玻璃） */
-    fun observeEnabled(key: String): kotlinx.coroutines.flow.Flow<Boolean> =
-        dataStore.data.map { it[intPreferencesKey(key)] == 1 }
 
     fun isWhitelisted(pkg: String): Boolean {
         return try { runBlocking {

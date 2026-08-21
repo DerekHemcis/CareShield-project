@@ -19,8 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.vector.ImageVector
-import com.careshield.app.data.SettingsRepo
 import com.careshield.app.ui.locale.T
 import com.careshield.app.ui.pages.HomeScreen
 import com.careshield.app.ui.pages.SettingsScreen
@@ -36,17 +34,14 @@ fun MainShell(
     shizukuState: Int = 0
 ) {
     var tab by remember { mutableStateOf(0) }
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-
-    // 液态玻璃开关（响应式，设置页切换后立即生效）
-    val repo = remember { SettingsRepo(ctx) }
-    val liquidGlass by repo.observeEnabled("liquid_glass").collectAsState(initial = true)
+    // 导航栏固定玻璃样式（液态玻璃开关已移除）
+    val liquidGlass = true
 
     val items = listOf(
-        NavItem(Icons.Filled.Home,      T("功能")),
-        NavItem(Icons.Filled.Settings,  T("设置")),
-        NavItem(Icons.AutoMirrored.Filled.List, T("日志")),
-        NavItem(Icons.Filled.Info,      T("关于")),
+        NavItem(T("功能"), Icons.Filled.Home, "🏠"),
+        NavItem(T("设置"), Icons.Filled.Settings, "⚙️"),
+        NavItem(T("日志"), Icons.AutoMirrored.Filled.List, "📋"),
+        NavItem(T("关于"), Icons.Filled.Info, "ℹ️"),
     )
 
     Column(Modifier.fillMaxSize()) {
@@ -66,7 +61,7 @@ fun MainShell(
                         if (swiped) return@detectHorizontalDragGestures
                         acc += dragAmount
                         if (acc < -80) {       // 左滑 → 下一tab
-                            if (tab < items.size - 1) tab++
+                            if (tab < 3) tab++
                             swiped = true
                         } else if (acc > 80) { // 右滑 → 上一tab
                             if (tab > 0) tab--
@@ -78,6 +73,7 @@ fun MainShell(
             AnimatedContent(
                 targetState = tab,
                 transitionSpec = {
+                    // 快速淡入淡出（避免卡顿）
                     (fadeIn(animationSpec = androidx.compose.animation.core.tween(150)))
                         .togetherWith(fadeOut(animationSpec = androidx.compose.animation.core.tween(100)))
                 },
@@ -95,16 +91,13 @@ fun MainShell(
                 }
             }
         }
-        // 底部液态玻璃导航栏（useGlass 响应式绑定开关，设置页切换立即生效）
-        LiquidGlassNavBar(
+        // 底部导航
+        GlassNavigation(
             items = items,
             selectedIndex = tab,
-            onSelectedChange = { tab = it },
-            useGlass = liquidGlass,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 15.dp, vertical = 10.dp),
-            selectedColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+            onSelected = { tab = it },
+            liquidGlass = liquidGlass,
+            modifier = Modifier.padding(bottom = 8.dp)
         )
     }
 }

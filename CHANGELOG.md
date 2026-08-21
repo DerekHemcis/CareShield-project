@@ -1,5 +1,20 @@
 # CareShield 更新日志
 
+## v1.5.0 (构建 050 — 2026-08-21)
+
+### 导航栏回退到 43 稳定版 + 移除液体玻璃开关
+- 腾讯/搜狐开屏广告拦截：基于可靠原理的多窗口扫描 + Shizuku root `input tap` 已加入，
+  但在目标设备上仍未跳过（独立窗口/坐标时机仍是难点，本轮回退以保稳定为先）。
+- **导航栏回退**：移除 workbuddy 转写的 `LiquidGlassNavBar.kt`，恢复 43clean 的
+  `GlassNavigation.kt`（Material3 标准导航栏）。
+- **删除液体玻璃开关**：设置页移除「液态玻璃效果」开关；`MainShell` 固定玻璃样式
+  （`liquidGlass = true`），不再读任何开关；`SettingsRepo.observeEnabled`（临时响应式封装）一并移除。
+- README 同步更新（移除 LiquidGlassNavBar 引用，改回 GlassNavigation）。
+- **隔离保证**：`AdBlockerService` 常规拦截方法与 43 完全一致，中羽/有道/咪咕不受影响。
+- versionCode 50 / versionName 1.5.0。
+
+---
+
 ## v1.4.1 (构建 041 — 2026-08-21)
 
 ### 视频 App 开屏广告拦截（腾讯视频/搜狐视频/爱奇艺/优酷/乐视）

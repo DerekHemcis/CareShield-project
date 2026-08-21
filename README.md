@@ -71,7 +71,7 @@ app/src/main/java/com/careshield/app/
 ├── ui/
 │   ├── Theme.kt            Material3 深浅主题
 │   ├── nav/MainShell.kt    主壳 + 手势切页 + 底部导航
-│   ├── nav/LiquidGlassNavBar.kt workbuddy 转写的液态玻璃导航栏（可拖拽药丸指示器 + 磨砂玻璃）
+│   ├── nav/GlassNavigation.kt Material3 底部导航（玻璃/经典）
 │   ├── pages/              首页/设置/日志/关于
 │   ├── guardian/           监护人面板/白名单/改密码
 │   ├── locale/AppLocaleManager.kt + Translator.kt  多语言(简/繁/英)
