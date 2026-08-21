@@ -1,5 +1,25 @@
 # CareShield 更新日志
 
+## v1.1.0 (构建 030 — 2026-08-21)
+
+### 修复：回归43版稳定拦截 + 针对性解决腾讯视频/搜狐视频跳过失效
+
+**背景**：52版把 `accessibility_service_config.xml` 的关键 flag 删减，导致很多开屏广告节点收不到、拦截失效；设置页也删掉了"自动跳过广告/自动关闭弹窗"开关。本次以实测可用的43版为基础重做，保证功能正常。
+
+**做了什么**：
+- **无障碍 config 回归43版**：恢复 `flagReportViewIds|flagIncludeNotImportantViews|flagRetrieveInteractiveWindows` + `canPerformGestures`（关键，让"不重要"的广告按钮节点可见、可手势）
+- **设置页恢复"自动跳过广告 / 自动关闭广告弹窗"开关**（43版），拦截核心功能可开启
+- **移除52引入的 DnsVpnService / MiniA11y 白板服务**（避免 VpnService 干扰与多余进程，manifest 回归纯净43版）
+- **新增坐标手势点击兜底** `coordinateTapOnNode`：
+  - 常规App：ACTION_CLICK 失败时自动降级为真实坐标手势点击
+  - **视频类App（腾讯视频 com.tencent.qqlive / 搜狐视频 com.sohu.sohuvideo / 爱奇艺 / 优酷）优先用坐标点击**，直接点"跳过/倒计时"文字节点中心——解决搜狐"日志显示点了跳过但广告未消失"（其实是 performAction 对自定义View/图片广告无效）
+
+### 已知范围（经实测）
+- 43版原本就能拦截：有道词典、中羽在线、咪咕视频（本版继承）
+- 本次增强目标：腾讯视频、搜狐视频（坐标点击优先）
+
+---
+
 ## v1.0.8 (构建 029 — 2026-08-19)
 
 ### UI 优化

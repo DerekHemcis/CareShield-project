@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <!-- Shizuku 权限：免 root 增强能力 -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
@@ -36,17 +35,6 @@
             android:multiprocess="false"
             android:enabled="true" />
 
-        <!-- DNS 过滤 VPN 服务（官方格式：intent-filter + dataSync 类型，兼容各 compileSdk） -->
-        <service
-            android:name=".security.DnsVpnService"
-            android:exported="true"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="dataSync">
-            <intent-filter>
-                <action android:name="android.net.VpnService" />
-            </intent-filter>
-        </service>
-
         <!-- 流氓软件安装监听 -->
         <receiver
             android:name=".security.RogueWatchdog"
@@ -68,19 +56,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
-        <!-- 【最小验证】白板无障碍服务：仅用于确认系统能否 bind 无障碍服务 -->
-        <service
-            android:name=".minitest.MiniA11yService"
-            android:exported="true"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/mini_accessibility_config" />
-        </service>
 
         <!-- 无障碍广告拦截服务 -->
         <service

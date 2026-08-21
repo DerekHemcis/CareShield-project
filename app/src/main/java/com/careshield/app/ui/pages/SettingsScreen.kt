@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import android.content.Intent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,8 +49,10 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     ) {
         // 老人防护开关
         SectionTitle("防护功能")
-                GuardianFeatureSwitch(T("激进跳过(实验)"), "全屏广告+角落倒计时自动点·可能误触", "func_aggressive_skip", repo, resetCounter)
-                GuardianFeatureSwitch(T("滑屏跳过信息流广告"), T("抖音/快手信息流广告自动上滑"), "func_misclick", repo, resetCounter)
+        GuardianFeatureSwitch(T("自动跳过广告"), T("识别开屏广告并自动点击跳过"), "func_skip_ad", repo, resetCounter)
+        GuardianFeatureSwitch(T("激进跳过(实验)"), "全屏广告+角落倒计时自动点·可能误触", "func_aggressive_skip", repo, resetCounter)
+        GuardianFeatureSwitch(T("自动关闭广告弹窗"), T("识别 关闭/× 关闭（需广告上下文）"), "func_close_pop", repo, resetCounter)
+        GuardianFeatureSwitch(T("滑屏跳过信息流广告"), T("抖音/快手信息流广告自动上滑"), "func_misclick", repo, resetCounter)
         GuardianFeatureSwitch(T("拦截网页广告跳转"), T("防止误触打开广告网页"), "func_block_web", repo, resetCounter)
 
         SectionTitle("增强能力")
@@ -62,38 +63,6 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
                 toast(context, "已发起 Shizuku 授权请求")
             } else {
                 toast(context, "Shizuku 已连接")
-            }
-        }
-        // DNS 广告过滤（VpnService 拦广告域名源头）
-        var vpnOn by remember { mutableStateOf(isVpnRunning()) }
-        val vpnLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-            androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-        ) {
-            // 授权完成，启动服务
-            try {
-                context.startForegroundService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
-                vpnOn = true
-            } catch (_: Exception) {
-                context.startService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
-                vpnOn = true
-            }
-        }
-        SettingRow(if (vpnOn) "DNS 广告过滤(开)" else "DNS 广告过滤(关)", if (vpnOn) "源头拦广告域名" else "开启后拦截广告域名") {
-            if (vpnOn) {
-                context.stopService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
-                vpnOn = false
-            } else {
-                try {
-                    val intent = android.net.VpnService.prepare(context)
-                    if (intent != null) {
-                        vpnLauncher.launch(intent)
-                    } else {
-                        context.startService(Intent(context, com.careshield.app.security.DnsVpnService::class.java))
-                        vpnOn = true
-                    }
-                } catch (e: Exception) {
-                    toast(context, "VPN 启动失败：${e.message}")
-                }
             }
         }
         // 安全 API key（Virustotal，可留空）
@@ -315,13 +284,4 @@ internal fun SwitchRow(title: String, desc: String, checked: Boolean, onChange: 
 
 private fun toast(context: android.content.Context, msg: String) {
     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
-}
-
-private fun isVpnRunning(): Boolean {
-    return try {
-        // 检查是否有 VPN 接口
-        val dir = java.io.File("/sys/class/net")
-        if (!dir.exists()) return false
-        dir.listFiles()?.any { it.name.startsWith("tun") || it.name.startsWith("ppp") } ?: false
-    } catch (_: Exception) { false }
 }
