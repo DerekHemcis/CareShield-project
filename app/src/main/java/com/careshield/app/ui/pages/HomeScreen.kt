@@ -6,6 +6,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import com.careshield.app.data.SettingsRepo
 import com.careshield.app.R
 import com.careshield.app.ui.locale.T
 import com.careshield.app.accessibility.AdBlockerService
+import com.careshield.app.security.RogueScanner
 import com.careshield.app.shizuku.ShizukuManager
 
 @Composable
@@ -120,6 +122,106 @@ fun HomeScreen(
         FeatureSwitch(T("滑屏跳过信息流广告"), T("抖音/快手信息流广告自动上滑"), "func_misclick", repo)
         FeatureSwitch(T("拦截网页广告跳转"), T("防止误触打开广告网页"), "func_block_web", repo)
         FeatureSwitch(T("流氓软件拦截"), T("Shizuku 增强 · 阻止安装恶意应用"), "func_rouge", repo, needsShizuku = true)
+        RogueScanCard()
+    }
+}
+
+/**
+ * 一键扫描手机：遍历已安装 App，识别高风险(赌博/贷款/色情等)并可选 Shizuku 一键卸载。
+ * 不依赖 PACKAGE_ADDED 广播（安卓8+ 后台收不到），主动扫描，可靠可控。
+ */
+@Composable
+private fun RogueScanCard() {
+    val context = LocalContext.current
+    var scanning by remember { mutableStateOf(false) }
+    var found by remember { mutableStateOf<List<RogueScanner.ScanItem>?>(null) }   // null=未扫过
+    var scanningError by remember { mutableStateOf<String?>(null) }
+    val s = MaterialTheme.colorScheme
+
+    fun doScan() {
+        scanning = true
+        scanningError = null
+        found = null
+        Thread {
+            try {
+                val items = RogueScanner.scan(context)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    scanning = false
+                    found = items
+                }
+            } catch (e: Exception) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    scanning = false
+                    scanningError = e.message ?: "扫描失败"
+                }
+            }
+        }.start()
+    }
+
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("🔍", fontSize = 18.sp)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(T("一键扫描手机"), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = s.onSurface)
+                    Text(T("主动识别装好的高风险 App（赌博/贷款/色情等）"), fontSize = 11.sp, color = s.onSurfaceVariant)
+                }
+                Button(
+                    onClick = { doScan() },
+                    enabled = !scanning,
+                    colors = ButtonDefaults.buttonColors(containerColor = if (scanning) s.onSurface.copy(alpha=.3f) else s.primary)
+                ) { Text(if (scanning) T("扫描中…") else T("开始扫描")) }
+            }
+
+            // 扫描结果
+            val list = found
+            if (list != null) {
+                Spacer(Modifier.height(8.dp))
+                if (list.isEmpty()) {
+                    Text(T("✓ 未发现高风险 App"), fontSize = 13.sp, color = s.primary)
+                } else {
+                    Text(T("发现 ${list.size} 个高风险 App，点击移除："), fontSize = 13.sp, color = s.onSurfaceVariant)
+                    list.forEach { item ->
+                        RogueItemRow(item)
+                    }
+                }
+            }
+            if (scanningError != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(T("扫描失败：${scanningError}"), fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RogueItemRow(item: RogueScanner.ScanItem) {
+    val context = LocalContext.current
+    val s = MaterialTheme.colorScheme
+    Card(
+        Modifier.fillMaxWidth().padding(top = 6.dp).clickable {
+            // 卸载该 App
+            val ok = com.careshield.app.shizuku.ShizukuManager.execShell("pm uninstall --user 0 ${item.packageName}")
+            android.widget.Toast.makeText(
+                context,
+                "尝试移除 ${item.label}（${ok?.trim() ?: "未授权，需先连接 Shizuku"}）",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = s.errorContainer)
+    ) {
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(item.label, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = s.onErrorContainer)
+                Text("${item.packageName} · ${item.reason}", fontSize = 11.sp, color = s.onErrorContainer.copy(alpha = .7f))
+            }
+            Text("移除", color = s.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        }
     }
 }
 

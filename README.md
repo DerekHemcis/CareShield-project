@@ -64,10 +64,9 @@ app/src/main/java/com/careshield/app/
 ├── shizuku/ShizukuManager.kt  Shizuku 集成
 ├── security/
 │   ├── RogueClassifier.kt   流氓软件7类判定引擎
-│   ├── RogueWatchdog.kt     新装APK监听+云检+本地兜底拦截
-│   ├── VirusTotalClient.kt  Virustotal 云端哈希识别
-│   └── DnsVpnService.kt     DNS 过滤 VPN（源头拦广告域名）
-│   └── DnsBlocker.kt        hosts 域名拦截（AdGuard规则）
+│   ├── RogueWatchdog.kt     新装APK监听(受限)
+│   ├── RogueScanner.kt      一键扫描已装App，识别高风险并卸除
+│   └── VirusTotalClient.kt  Virustotal 云端哈希识别
 ├── ui/
 │   ├── Theme.kt            Material3 深浅主题
 │   ├── nav/MainShell.kt    主壳 + 手势切页 + 底部导航
@@ -98,23 +97,27 @@ app/src/main/res/
 
 ---
 
-## 七、当前版本特性 (v1.2.x)
+## 七、当前版本特性 (v1.6.0)
 
-### 广告拦截（多层）
-- **无障碍点跳过**：识别"跳过/倒计时"文字按钮自动点（中羽等含文字按钮可拦）
-- **激进跳过（实验）**：全屏图片广告 + 角落倒计时自动点（可选项开关）
-- **DNS 广告过滤（VpnService）**：把系统 DNS 指向广告过滤 DNS，**从源头拦广告域名**，视频/资讯类 App 开屏广告不加载（解决无障碍点不到的 webview 广告）
+### 广告拦截（无障碍，实测）
+- **无障碍点跳过**：识别"跳过/倒计时"文字按钮自动点。
+  实测可拦：**有道词典 / 中羽在线 / 咪咕视频** 的开屏广告。
+- 视频类 App（腾讯/搜狐）开屏广告在独立窗口，无障碍扫不到，暂未稳定跳过（见 PROJECT-RECORD 第十四章）。
 
-### 防流氓（智能识别）
-- **Virustotal 云端**：设置页可填 API key，新装 APK 哈希查云端多引擎判定
-- **本地兜底**：危险词库（90+）+ 危险 App 名单 + RogueClassifier 7 类
-- **Shizuku 拦截**：命中恶意则自动卸载
+### 防流氓软件（主动扫描，可靠）
+- **一键扫描手机（推荐）**：首页「一键扫描手机」→ 主动扫描已装 App，`RogueClassifier` 本地
+  危险词库（色情/赌博/贷款/私彩等）判定 → 列出高风险 → 逐个 **Shizuku `pm uninstall` 一键移除**。
+  不依赖后台广播，只要点击就必能发现问题 App。
+- **Virustotal 云端**（可选）：设置页填 API key，哈希查云端多引擎判定。
+- 说明：原先"装完自动卸载"依赖 `PACKAGE_ADDED` 广播，安卓 8+ 后台收不到，已不作为主路径。
 
 ### 设备保护
-- 无障碍 + Shizuku 增强 + DNS VPN 三通道
-- 多语言（简/繁/英）、主题切换、监护人面板、配置备份
+- 无障碍 + Shizuku 增强 双通道；多语言（简/繁/英）、主题切换、监护人面板、日志导出。
 
 ### 依赖
-- Virustotal API（可选，设置页填）；AdGuard 过滤规则提取的广告域名（内置）
-- Shizuku（增强拦截）；DNS VPN（需一次授权）
+- Virustotal API（可选）；AdGuard 广告域名库（备用）；Shizuku（防流氓卸载 / 增强拦截）。
+
+### 已知边界
+- DNS/VpnService 拦截不可行（hosts 只读、ndc 不被识别），已移除。
+- 腾讯视频 / 搜狐视频 开屏广告暂不支持自动跳过。
 

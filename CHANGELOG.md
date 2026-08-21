@@ -1,5 +1,20 @@
 # CareShield 更新日志
 
+## v1.6.0 (构建 060 — 2026-08-21)
+
+### 防流氓软件：一键扫描手机 + 修复自干扰
+- **背景**：原 `RogueWatchdog` 靠监听 `ACTION_PACKAGE_ADDED` 广播触发拦截，但安卓 8.0+ 对
+  静态注册的隐式广播**后台收不到**（除非 App 在前台/被点开），导致装流氓软件时不触发卸载——
+  实测日志只有"防误触"记录，无"流氓"拦截。方向受限，不可靠。
+- **新增 `RogueScanner`（主动扫描，方案 A）**：遍历已安装 App，用 `RogueClassifier` 本地
+  危险词库（色情/赌博/贷款/私彩）判定，列出高风险 App；不依赖后台广播，可靠可控。
+  - 首页新增 **「一键扫描手机」**：点击即扫描 → 列出高风险 App → 逐个"移除"（Shizuku `pm uninstall`）。
+- **修复自干扰**：`handleAd` 首行排除 `com.careshield.app`，不再把自家"跳过"文字当广告误拦
+  （此前日志大量 "拦截 com.careshield.app · 跳过广告"，污染日志且可能干扰拦截）。
+- versionCode 60 / versionName 1.6.0；About/CHANGELOG/PROJECT-RECORD/README 同步。
+
+---
+
 ## v1.5.0 (构建 050 — 2026-08-21)
 
 ### 导航栏回退到 43 稳定版 + 移除液体玻璃开关

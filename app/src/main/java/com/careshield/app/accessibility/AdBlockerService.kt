@@ -136,6 +136,8 @@ class AdBlockerService : AccessibilityService() {
 
     private fun handleAd(root: AccessibilityNodeInfo, skipAd: Boolean, closePop: Boolean, swipeAd: Boolean) {
         val pkg = packageName ?: return
+        // 绝不动 CareShield 自己界面（避免把自家"跳过"等文字当广告误拦，污染日志/自干扰）
+        if (pkg == "com.careshield.app") return
         val repo = SettingsRepo(this)
 
         // 单机/离线/工具类应用基本无广告：跳过拦截，避免误杀（如计算器、相册、日历、输入法）

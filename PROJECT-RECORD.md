@@ -363,4 +363,76 @@ PackageManager 加载各应用图标显示。
 
 ---
 
+## 十四、视频 App 拦截尝试 与 导航回退（2026-08-21，v1.4.1 / v1.5.0）
+
+> 这是针对"老人常用视频 App（腾讯/搜狐）也能自动跳过广告"这条难路的探索与阶段性收束。
+
+### 14.1 v1.4.1：视频 App 开屏广告拦截尝试
+- **目标**：有道/中羽不是老人常刷的；老人更常看 腾讯视频、搜狐视频 等。
+- **新增 `handleVideoAdIfApplicable`**（完全隔离，不影响常规拦截）：
+  - 仅当 packageName ∈ 视频 App 名单（腾讯 qqlive / 搜狐 sohuvideo / 爱奇艺 qiyi /
+    优酷 youku / 乐视 letv）时触发。
+  - **遍历所有交互窗口（`windows`）** 找"跳过/倒计时"广告节点——因为这些开屏广告渲染在
+    **独立窗口**（SplashHomeActivity 叠加层），`rootInActiveWindow` 扫不到，这是无障碍拦不住
+    腾讯/搜狐的直接原因。
+  - 命中后用 **Shizuku root `input tap` 真实坐标点击** 跳过按钮（ColorOS 上 `dispatchGesture`
+    注入不可靠）；Shizuku 未授权时退回手势。
+- **实测结果**：腾讯视频、搜狐视频仍然没有跳过。
+
+### 14.2 结论：腾讯/搜狐开屏广告为何难拦
+- 大厂视频 App 开屏广告多为 **App 内私有渲染 + 图片/webview"跳过"按钮**，无障碍节点不稳定，
+  且**坐标点击受广告出现时机/真实点击区域**影响大。
+- **DNS 拦截也走不通**：`/system hosts` 只读、`ndc 改 DNS` 不被该系统识别，且开屏广告素材
+  不走可过滤的公共广告域名 → 腾讯/搜狐无法从 DNS 源头拦截。
+- **阶段结论**：在 ColorOS 上，腾讯/搜狐开屏广告暂无法稳定自动跳过。产品如实呈现"能拦
+  中羽/有道/咪咕"，腾讯/搜狐暂不支持，不建议再盲目攻坚。
+
+### 14.3 v1.5.0：导航栏回退到 43 稳定版 + 移除液体玻璃开关
+- **导航栏回退**：移除 workbuddy 转写的 `LiquidGlassNavBar.kt`（可拖拽药丸 + 镜面高光），
+  恢复 43clean 的 `GlassNavigation.kt`（Material3 标准导航栏）。
+- **删除液体玻璃开关**：
+  - 设置页移除「液态玻璃效果」开关；
+  - `MainShell` 固定玻璃样式（`liquidGlass = true`），不再读任何开关；
+  - `SettingsRepo.observeEnabled`（临时响应式封装）一并移除，清掉无用 `map` import。
+  - 残留：`SettingsRepo.resetDefaults` 里 `liquid_glass` 键仍在（无害兜底）；`LiquidGlass.kt`
+    及 AGSL shader 资源保留在工程（技术资产，未启用）。
+- **README 同步**：工程结构里 `LiquidGlassNavBar.kt` 引用改回 `GlassNavigation.kt`。
+- **隔离保证**：`AdBlockerService` 的 `handleAd` 及全部常规方法与 43 完全一致，
+  中羽/有道/咪咕不受影响。
+
+### 14.4 版本
+- v1.4.1（versionCode 41）→ v1.5.0（versionCode 50）；About 页同步；CHANGELOG 已更新至 v1.5.0。
+
+---
+
+## 十五、防流氓软件：一键扫描手机（2026-08-21，v1.6.0）
+
+> 方案 A。把"被动等广播"改成"主动扫描"，可靠解决防装。
+
+### 15.1 为什么原防装不生效（实测结论）
+- `RogueWatchdog` 靠监听 `ACTION_PACKAGE_ADDED` 广播触发 → 安卓 8.0+ 后台收不到该隐式广播
+  （除非进程在前台/被点开）→ 装流氓软件时几乎不触发。
+- 实测日志：装赌博软件时只有"防误触: 拦截 下载页面"（按返回），**没有任何"流氓"拦截记录** →
+  证实不是规则没命中，而是广播根本没到。
+- 顺带发现自干扰 bug：`handleAd` 未排除自己 → 日志大量 "拦截 com.careshield.app · 跳过广告"。
+
+### 15.2 新增 RogueScanner（主动扫描，方案 A）
+- 遍历 `getInstalledApplications`，用 `RogueClassifier.classify(pkg, label)` 判定，
+  命中 `BLOCK`（色情/赌博/贷款/私彩等）则列为"高风险"。
+- 跳过 CareShield 自身、Shizuku、系统关键应用（防误卸）。
+- **不依赖后台广播**，用户点击才扫描，可靠、可控、可演示。
+
+### 15.3 首页新增「一键扫描手机」
+- 按钮点击 → 后台扫描 → 列出高风险 App（名字 + 包名 + 命中原因）
+- 每个条目可点"移除" → `ShizukuManager.execShell("pm uninstall --user 0 <pkg>")` 一键卸载
+- 这是现场演示防装的最佳方式（装一个"极速放款"样机 → 扫到 → 移除）。
+
+### 15.4 修复自干扰
+- `handleAd` 首行 `if (pkg == "com.careshield.app") return`，不再自拦自记。
+
+### 15.5 版本
+- v1.6.0（versionCode 60）；About/CHANGELOG/README 同步。
+
+---
+
 *文档更新时间：2026-08-21*

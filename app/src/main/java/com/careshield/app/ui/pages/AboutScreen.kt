@@ -86,7 +86,7 @@ fun AboutScreen() {
         AboutRow("备份") { showBackupDialog = true }
         Spacer(Modifier.height(24.dp))
         // 底部：版本 + 版权信息
-        Text(T("版本 1.5.0"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Text(T("版本 1.6.0"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Text(T("© 2026 DerekHemcis · CareShield 亲安盾"), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Text(T("作者：DerekHemcis"), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(16.dp))
@@ -134,7 +134,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
             Column(Modifier.padding(16.dp)) {
                 Text(T("CareShield 亲安盾"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
-                Text(T("当前版本：v1.5.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(T("当前版本：v1.6.0"), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(T("已是最新版本"), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
             }
         }
@@ -144,7 +144,7 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
         // 更新内容
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) {
             Column(Modifier.padding(16.dp)) {
-                Text(T("v1.5.0 更新内容"), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(T("v1.6.0 更新内容"), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Text(UPDATE_TEXT, fontSize = 13.sp, lineHeight = 20.sp)
             }
@@ -153,12 +153,11 @@ private fun AboutUpdatePage(onBack: () -> Unit) {
 }
 
 private const val UPDATE_TEXT =
-    "• 广告识别：倒计时跳过完整覆盖（含激进模式开关）\n" +
-    "• 智能防流氓：Virustotal 云端识别 + 本地词库兜底\n" +
-    "• DNS 拦截（学 AdGuard）：3500+ 广告域名 hosts 拦截\n" +
-    "• 设置页：安全 API Key、激进跳过开关\n" +
-    "• 界面：Material3 导航、多语言(简/繁/英)、手势切换\n" +
-    "• 日志页：拦截记录 + 导出/删除"
+    "• 广告拦截：实测拦截 有道词典 / 中羽在线 / 咪咕视频 的开屏广告\n" +
+    "• 智能防流氓：Virustotal 云端识别 + 本地危险词库（色情/赌博/贷款/私彩）\n" +
+    "• 一键扫描手机：主动扫描已装 App，识别高风险软件，一键 Shizuku 卸载\n" +
+    "• 无障碍 config 回归 43 稳定版；导航固定 Material3（无液体玻璃开关）\n" +
+    "• 多语言(简/繁/英)、主题切换、监护人面板、日志导出"
 
 @Composable
 private fun AboutSectionTitle(t: String) {
