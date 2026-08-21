@@ -319,10 +319,10 @@ class AdBlockerService : AccessibilityService() {
         }
         try {
             // 视频类 App（腾讯视频/搜狐视频等）的跳过按钮常为自定义 View，performAction(ACTION_CLICK)
-            // 会返回成功但广告不消失（搜狐已见）。真实系统级坐标手势点击一定能命中按钮，
-            // 故对这类 App 直接改用坐标点击（不影响常规 App 路径）。
-            if (GESTURE_FIRST_PKGS.any { pkg.startsWith(it) }) {
-                coordinateTapOnNode(node)
+            // 会返回成功但广告不消失（搜狐已见）。用"校准坐标表 + 节点坐标"双重定位，
+            // 真实系统级坐标手势点击跳过按钮（不影响常规 App 路径）。
+            if (VIDEO_SKIP_COORDS.containsKey(pkg)) {
+                coordinateTapOnNode(node, pkg)
                 return
             }
 
@@ -343,32 +343,50 @@ class AdBlockerService : AccessibilityService() {
     }
 
     /**
-     * 用系统级真实触摸手势（dispatchGesture）点击节点中心坐标。
-     * 绕过被测 App 对无障碍 performAction 的拦截；对自定义 View/SurfaceView 广告有效。
-     * 只在视频类 App 上调用（GESTURE_FIRST_PKGS）。
+     * 用系统级真实触摸手势（dispatchGesture）在指定坐标点击。
+     * 优先使用"校准坐标表"（按 App + 分辨率人工校准的开屏跳过按钮位置），
+     * 校准表没有时才退回用节点 bounds 中心。连续点多次提升成功率。
      */
-    private fun coordinateTapOnNode(node: AccessibilityNodeInfo): Boolean {
+    private fun coordinateTapOnNode(node: AccessibilityNodeInfo, pkg: String? = null): Boolean {
         return try {
-            val r = android.graphics.Rect()
-            node.getBoundsInScreen(r)
-            if (r.isEmpty || r.width() <= 0 || r.height() <= 0) {
-                android.util.Log.i("CareShield", "坐标点击节点无效bounds pkg=$packageName")
-                return false
+            // 1) 优先用校准坐标表
+            var cx = -1f; var cy = -1f
+            val pk = pkg ?: packageName ?: ""
+            val coord = VIDEO_SKIP_COORDS[pk]
+            if (coord != null && coord.first > 0 && coord.second > 0) {
+                cx = coord.first.toFloat()
+                cy = coord.second.toFloat()
+                android.util.Log.i("CareShield", "使用校准坐标 跳过按钮($cx,$cy) pkg=$pk")
+            } else if (coord != null) {
+                android.util.Log.i("CareShield", "该App坐标未校准($pk)，退回节点bounds点击")
             }
-            val cx = (r.left + r.width() / 2).toFloat()
-            val cy = (r.top + r.height() / 2).toFloat()
-            val path = Path().apply { moveTo(cx, cy); lineTo(cx + 1, cy + 1) }
-            val gesture = GestureDescription.Builder()
-                .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
-                .build()
-            val dispatched = dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-                override fun onCompleted(gestureDescription: GestureDescription?) {}
-                override fun onCancelled(gestureDescription: GestureDescription?) {}
-            }, null)
-            android.util.Log.i("CareShield", "坐标点击节点中心($cx,$cy) pkg=$packageName dispatched=$dispatched")
+            // 2) 若校准坐标无效，退回节点 bounds 中心
+            if (cx < 0 || cy < 0) {
+                val r = android.graphics.Rect()
+                node.getBoundsInScreen(r)
+                if (r.isEmpty || r.width() <= 0 || r.height() <= 0) {
+                    android.util.Log.i("CareShield", "坐标点击节点无效bounds pkg=$pk")
+                    return false
+                }
+                cx = (r.left + r.width() / 2).toFloat()
+                cy = (r.top + r.height() / 2).toFloat()
+            }
+
+            // 连续点 3 次，间隔 120ms，提高命中率（开屏跳过的响应有延迟）
+            var dispatched = false
+            for (i in 0 until 3) {
+                val path = Path().apply { moveTo(cx, cy); lineTo(cx + 1, cy + 1) }
+                val gesture = GestureDescription.Builder()
+                    .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+                    .build()
+                dispatched = dispatchGesture(gesture, null, null)
+                if (!dispatched) break
+                Thread.sleep(120)
+            }
+            android.util.Log.i("CareShield", "坐标点击跳过($cx,$cy) x${(if(dispatched)3 else 1)}次 pkg=$pk")
             dispatched
-        } catch (_: Exception) {
-            android.util.Log.i("CareShield", "坐标点击异常: ${packageName}")
+        } catch (e: Exception) {
+            android.util.Log.i("CareShield", "坐标点击异常: ${e.message} pkg=$packageName")
             false
         }
     }
@@ -411,14 +429,16 @@ class AdBlockerService : AccessibilityService() {
             "com.coloros.note", "com.android.documentsui", "com.android.contacts"
         )
 
-        // 视频类 App：其开屏广告"跳过/关闭"按钮常用自定义 View / 独立广告 Window，
-        // performAction(ACTION_CLICK) 会返回成功但广告不消失（搜狐已现）。对这些 App 直接
-        // 用系统级真实坐标手势点击跳过按钮，保证生效。仅这些 App 触发，不影响常规拦截。
-        private val GESTURE_FIRST_PKGS = listOf(
-            "com.tencent.qqlive",      // 腾讯视频
-            "com.sohu.sohuvideo",      // 搜狐视频
-            "com.qiyi.video",          // 爱奇艺
-            "com.youku.phone"          // 优酷
+        // 视频类 App 开屏"跳过"按钮的校准坐标表（key=包名，value=(x,y) 按钮中心）。
+        // 坐标对应真机分辨率 1080x2352。可在真机实测后校准填入；未列的 App 自动退回节点 bounds 中心点击。
+        // 已实测：腾讯视频跳过按钮在右上角 (~982,177)。
+        private val VIDEO_SKIP_COORDS = mapOf(
+            "com.tencent.qqlive" to (982 to 177),       // 腾讯视频（实测）
+            // 以下待你在真机实测后校准；先留空表项，运行时退回节点坐标点击
+            "com.sohu.sohuvideo" to (-1 to -1),
+            "com.qiyi.video" to (-1 to -1),
+            "com.youku.phone" to (-1 to -1),
+            "com.letv.android.client" to (-1 to -1)
         )
 
         // 倒计时+跳过 绑定正则：数字与"跳过"同节点（跳过在前/在后），避免裸数字误杀
