@@ -1,5 +1,24 @@
 # CareShield 更新日志
 
+## v1.1.1 (构建 031 — 2026-08-21)
+
+### 修正：v030 有过改动导致中羽/有道回归失效，本版修复
+- **AdBlockerService 完全回归 43 版逻辑**（唯一准入门槛：常规 App 的 handleAd/clickIfSafe/scoreNode 等
+  全部与 43 一致，保证中羽在线/有道词典/咪咕等原本可拦的保持可拦）。
+- **视频类 App 隔离增强**：仅当 packageName 属于 `GESTURE_FIRST_PKGS`
+  （腾讯视频 com.tencent.qqlive / 搜狐视频 com.sohu.sohuvideo / 爱奇艺 / 优酷）时，
+  clickIfSafe 改用**系统级真实坐标手势点击**（dispatchGesture）跳过按钮，
+  解决搜狐"日志显示点击跳过但广告未消失"（performAction 对自定义 View 广告无效）。
+  其余 App 完全走 43 原逻辑，不受影响。
+- manifest / accessibility_service_config / SettingsScreen 均与 43 一致
+  （flagIncludeNotImportantViews + canPerformGestures 关键 flag 已恢复）。
+
+### 说明
+- 43 版实测能拦：有道词典、中羽在线、咪咕视频
+- 本版在上述基础上，额外目标：腾讯视频、搜狐视频、爱奇艺、优酷
+
+---
+
 ## v1.1.0 (构建 030 — 2026-08-21)
 
 ### 修复：回归43版稳定拦截 + 针对性解决腾讯视频/搜狐视频跳过失效
