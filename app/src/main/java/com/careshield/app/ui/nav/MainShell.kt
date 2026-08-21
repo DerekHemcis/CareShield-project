@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -94,16 +95,16 @@ fun MainShell(
                 }
             }
         }
-        // 底部液态玻璃导航栏
+        // 底部液态玻璃导航栏（useGlass 响应式绑定开关，设置页切换立即生效）
         LiquidGlassNavBar(
             items = items,
             selectedIndex = tab,
             onSelectedChange = { tab = it },
+            useGlass = liquidGlass,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 15.dp, vertical = 10.dp),
             selectedColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-            unselectedColor = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
