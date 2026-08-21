@@ -146,10 +146,10 @@ private fun NavItemChip(
             .width(56.dp)
             .height(50.dp)
             .clip(RoundedCornerShape(25.dp))
-            .background(
+            .then(
                 if (selected)
-                    Brush.verticalGradient(listOf(glassTop, glassBottom))
-                else Color.Transparent
+                    Modifier.background(Brush.verticalGradient(listOf(glassTop, glassBottom)))
+                else Modifier
             )
             .scale(scale)
             .offset(y = lift.dp)
