@@ -104,16 +104,19 @@ fun AppRulesScreen(onBack: () -> Unit) {
                         )
                     }
                     Spacer(Modifier.height(8.dp))
+                    // T() 是 @Composable，只能在组合上下文调用；翻译串先在组合期算好
+                    val msgInvalid = T("请填包名，且至少填按钮文字或完整坐标")
+                    val msgSaved = T("已保存（同包名会覆盖）")
                     Button(
                         onClick = {
                             val xf = x.toFloatOrNull()?.takeIf { it in 0f..1f }
                             val yf = y.toFloatOrNull()?.takeIf { it in 0f..1f }
                             val r = AppRules.Rule(pkg.trim(), text.trim().takeIf { it.isNotBlank() }, xf, yf)
                             if (!r.valid) {
-                                msg = T("请填包名，且至少填按钮文字或完整坐标")
+                                msg = msgInvalid
                             } else {
                                 save(AppRules.upsert(rules, r))
-                                pkg = ""; text = ""; x = ""; y = ""; msg = T("已保存（同包名会覆盖）")
+                                pkg = ""; text = ""; x = ""; y = ""; msg = msgSaved
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
