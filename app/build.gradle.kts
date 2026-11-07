@@ -15,7 +15,9 @@ android {
         versionCode = 61
         versionName = "1.6.1"
         vectorDrawables { useSupportLibrary = true }
-        resourceConfigurations += listOf("zh-rTW", "en")
+        androidResources {
+            localeFilters += listOf("zh-rTW", "en")
+        }
     }
 
     buildTypes {
@@ -31,8 +33,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
+    // Kotlin 2.3+：kotlinOptions DSL 已移除，改用 compilerOptions
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
     buildFeatures {
         compose = true
