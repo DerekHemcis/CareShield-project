@@ -2,10 +2,12 @@ name: Build APK
 
 # 触发条件：
 #  - 推送代码到 main / master 分支
+#  - 推送 vX.Y.Z 标签（自动创建 GitHub Release 并附 APK，公开可直接下载）
 #  - 手动触发（仓库 Actions 页 → Run workflow → Run）
 on:
   push:
     branches: [main, master]
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
@@ -32,10 +34,18 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon
 
-      # 上传 APK 为 Artifact（Actions 运行页面下载）
+      # 上传 APK 为 Artifact（Actions 运行页面下载，需登录）
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: care-shield-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      # 打 vX.Y.Z 标签时：自动建 Release 并附上 APK（公开直链，无需登录）
+      - name: Release APK on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/debug/*.apk
+          generate_release_notes: true
