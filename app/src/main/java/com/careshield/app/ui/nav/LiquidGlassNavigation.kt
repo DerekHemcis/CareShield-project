@@ -69,7 +69,6 @@ fun LiquidGlassNavigation(
         val tabWidthDp = with(density) {
             ((constraints.maxWidth.toFloat() - 8f.dp.toPx()) / tabCount).toDp()
         }
-        val tabWidthPx = with(density) { tabWidthDp.toPx() }
 
         // 选中胶囊位移（spring 滑动）
         val indicatorOffset = remember { Animatable(selectedIndex.toFloat()) }
@@ -87,8 +86,8 @@ fun LiquidGlassNavigation(
             if (pressedIndex >= 0) 1f else 0f, tween(120), label = "press"
         )
 
-        // 玻璃面板
-        Row(
+        // 玻璃面板（外层 Box 叠加：底层=选中胶囊，上层=图标行，互不挤占）
+        Box(
             Modifier
                 .drawBackdrop(
                     backdrop = backdrop,
@@ -102,84 +101,83 @@ fun LiquidGlassNavigation(
                 )
                 .height(64.dp)
                 .fillMaxWidth()
-                .padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(4.dp)
         ) {
-            // 选中胶囊（绝对定位层）
-            Box(Modifier.fillMaxWidth().height(56.dp)) {
-                Box(
-                    Modifier
-                        .offset(x = tabWidthDp * indicatorOffset.value)
-                        .size(tabWidthDp, 56.dp)
-                        .drawBackdrop(
-                            backdrop = backdrop,
-                            shape = { Capsule() },
-                            effects = {
-                                lens(
-                                    10f.dp.toPx() * pressAnim,
-                                    14f.dp.toPx() * pressAnim,
-                                    chromaticAberration = true
-                                )
-                            },
-                            highlight = { Highlight.Default.copy(alpha = pressAnim) },
-                            shadow = { Shadow(alpha = pressAnim) },
-                            innerShadow = {
-                                InnerShadow(
-                                    radius = 8.dp * pressAnim,
-                                    color = Color.Black.copy(alpha = 0.2f * pressAnim)
-                                )
-                            },
-                            onDrawSurface = { drawRect(accentColor.copy(alpha = 0.16f)) }
-                        )
-                )
-            }
+            // 选中胶囊（绝对定位，跟随选中项滑动）
+            Box(
+                Modifier
+                    .offset(x = tabWidthDp * indicatorOffset.value)
+                    .size(tabWidthDp, 56.dp)
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { Capsule() },
+                        effects = {
+                            lens(
+                                10f.dp.toPx() * pressAnim,
+                                14f.dp.toPx() * pressAnim,
+                                chromaticAberration = true
+                            )
+                        },
+                        highlight = { Highlight.Default.copy(alpha = pressAnim) },
+                        shadow = { Shadow(alpha = pressAnim) },
+                        innerShadow = {
+                            InnerShadow(
+                                radius = 8.dp * pressAnim,
+                                color = Color.Black.copy(alpha = 0.2f * pressAnim)
+                            )
+                        },
+                        onDrawSurface = { drawRect(accentColor.copy(alpha = 0.16f)) }
+                    )
+            )
 
-            // 图标 + 文字（点击热区铺满每格）
-            items.forEachIndexed { index, item ->
-                val selected = index == selectedIndex
-                val scale by animateFloatAsState(
-                    if (selected) 1.12f else 1f, tween(150), label = "iconScale"
-                )
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .clickable(
-                            interactionSource = interactions[index],
-                            indication = null
-                        ) { onSelected(index) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        if (item.icon != null) {
-                            Icon(
-                                item.icon,
-                                contentDescription = item.label,
-                                tint = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .graphicsLayer {
+            // 图标 + 文字（Row 铺满，点击热区每格均分）
+            Row(Modifier.fillMaxWidth().height(56.dp)) {
+                items.forEachIndexed { index, item ->
+                    val selected = index == selectedIndex
+                    val scale by animateFloatAsState(
+                        if (selected) 1.12f else 1f, tween(150), label = "iconScale"
+                    )
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clickable(
+                                interactionSource = interactions[index],
+                                indication = null
+                            ) { onSelected(index) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (item.icon != null) {
+                                Icon(
+                                    item.icon,
+                                    contentDescription = item.label,
+                                    tint = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .graphicsLayer {
+                                            scaleX = scale
+                                            scaleY = scale
+                                        }
+                                )
+                            } else {
+                                Text(
+                                    item.emoji,
+                                    fontSize = 20.sp,
+                                    modifier = Modifier.graphicsLayer {
                                         scaleX = scale
                                         scaleY = scale
                                     }
-                            )
-                        } else {
+                                )
+                            }
                             Text(
-                                item.emoji,
-                                fontSize = 20.sp,
-                                modifier = Modifier.graphicsLayer {
-                                    scaleX = scale
-                                    scaleY = scale
-                                }
+                                item.label,
+                                fontSize = if (selected) 11.sp else 10.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
                             )
                         }
-                        Text(
-                            item.label,
-                            fontSize = if (selected) 11.sp else 10.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (selected) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
                     }
                 }
             }
