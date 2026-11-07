@@ -94,6 +94,15 @@ class SettingsRepo(private val context: Context) {
         }
     }
 
+    // ===== 每App自定义跳过规则（监护人标定）=====
+    private val KEY_APP_RULES = stringPreferencesKey("app_rules")
+    suspend fun getAppRules(): String = dataStore.data.first()[KEY_APP_RULES] ?: "[]"
+    fun getAppRulesSync(): String =
+        runCatching { runBlocking { getAppRules() } }.getOrDefault("[]")
+    suspend fun setAppRules(json: String) {
+        dataStore.edit { it[KEY_APP_RULES] = json }
+    }
+
     // ===== 安全 API key（Virustotal，可留空降级为本地规则） =====
     private val KEY_API = stringPreferencesKey("vt_api_key")
     suspend fun getApiKey(): String = dataStore.data.first()[KEY_API] ?: ""

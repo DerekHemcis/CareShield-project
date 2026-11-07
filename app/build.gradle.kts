@@ -62,4 +62,7 @@ dependencies {
     implementation("dev.rikka.shizuku:provider:13.1.5")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // JVM 单测（规则匹配逻辑）
+    testImplementation("junit:junit:4.13.2")
 }

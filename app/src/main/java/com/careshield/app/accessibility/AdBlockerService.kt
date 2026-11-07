@@ -140,6 +140,10 @@ class AdBlockerService : AccessibilityService() {
         if (pkg == "com.careshield.app") return
         val repo = SettingsRepo(this)
 
+        // ---- 优先级0（新增，独立路径）：监护人标定的每App自定义规则 ----
+        // 无障碍关键词命中→点击；否则比例坐标手势兜底。命中原路返回，不影响后续 43 基准逻辑。
+        if (handleAppRuleIfHit(root, repo, pkg)) return
+
         // 单机/离线/工具类应用基本无广告：跳过拦截，避免误杀（如计算器、相册、日历、输入法）
         if (isNoAdApp(pkg)) return
         // 微信本体：广告较少，仅保留"跳过"级拦截，不做激进弹窗/箭头处理
@@ -184,6 +188,35 @@ class AdBlockerService : AccessibilityService() {
                     clickIfSafe(target, repo, source)
                     return
                 }
+
+                // ---- 补充层（43 基准之外）：复合关键词 ----
+                // "跳过" 与倒计时数字被拆进同一容器的不同子节点（如 [跳过][5]），
+                // 43 版要求同一节点内 "数字+跳过"，这种情况会漏。仅对未命中节点尝试，
+                // 尺寸/数量双重约束防误杀。借鉴 Android-Touch-Helper matchesCompositeKeyword。
+                if (skipAd) {
+                    val cc = node.childCount
+                    if (cc in AdMatchRules.COMPOSITE_MIN_CHILDREN..AdMatchRules.COMPOSITE_MAX_CHILDREN) {
+                        val kids = mutableListOf<String>()
+                        for (i in 0 until cc) {
+                            val c = node.getChild(i) ?: continue
+                            val kt = c.text?.toString()?.takeIf { it.isNotBlank() }
+                                ?: c.contentDescription?.toString()?.takeIf { it.isNotBlank() }
+                            if (kt != null) kids.add(kt)
+                        }
+                        val hit = AdMatchRules.matchCompositeSkip(kids)
+                        if (hit != null) {
+                            val b = android.graphics.Rect()
+                            try { node.getBoundsInScreen(b) } catch (_: Exception) { b.setEmpty() }
+                            val screenW = resources.displayMetrics.widthPixels
+                            val screenH = resources.displayMetrics.heightPixels
+                            if (AdMatchRules.compositeSizeOk(b.width(), b.height(), screenW, screenH)) {
+                                val target = findClickableAncestor(node) ?: node
+                                clickIfSafe(target, repo, "广告(复合)")
+                                return
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -202,6 +235,78 @@ class AdBlockerService : AccessibilityService() {
             blockMisclickDownload(root)
         }
     }
+
+    /**
+     * 每App自定义规则命中处理（借鉴 Android-Touch-Helper 的 per-app 规则）。
+     * 返回 true 表示已处理（点击过），调用方直接 return。
+     * 注意：只对已标定的 App 生效，不碰任何其他 App 的拦截路径。
+     */
+    private fun handleAppRuleIfHit(root: AccessibilityNodeInfo, repo: SettingsRepo, pkg: String): Boolean {
+        val rule = try {
+            AppRules.ruleFor(AppRules.deserialize(repo.getAppRulesSync()), pkg)
+        } catch (_: Exception) { null } ?: return false
+
+        // 防抖：2 秒内不重复点
+        val now = System.currentTimeMillis()
+        if (now - lastAppRuleTap < 2000) return true  // 已标定App按住节流，视为已处理
+        lastAppRuleTap = now
+
+        // 1) 关键词控件匹配
+        if (rule.text != null) {
+            val nodes = mutableListOf<AccessibilityNodeInfo>()
+            try { collectAll(root, nodes) } catch (_: Exception) { }
+            for (node in nodes) {
+                val t = node.text?.toString()
+                val d = node.contentDescription?.toString()
+                if (AppRules.textMatches(rule, t, d)) {
+                    val target = findClickableAncestor(node) ?: node
+                    val ok = try { target.performAction(AccessibilityNodeInfo.ACTION_CLICK) } catch (_: Exception) { false }
+                    if (ok) {
+                        android.util.Log.i("CareShield", "自定义规则命中[控件] $pkg '${rule.text}'")
+                        logAsync(repo, "广告(自定义)", "$pkg · ${rule.text}")
+                        return true
+                    }
+                }
+            }
+        }
+
+        // 2) 比例坐标兜底（图片式按钮，无障碍扫不到文本）
+        val rx = rule.x; val ry = rule.y
+        if (rx != null && ry != null) {
+            val b = android.graphics.Rect()
+            try { root.getBoundsInScreen(b) } catch (_: Exception) { return false }
+            if (b.width() <= 0 || b.height() <= 0) return false
+            val x = (b.left + b.width() * rx).toInt()
+            val y = (b.top + b.height() * ry).toInt()
+            // 优先 Shizuku 真实触摸（ColorOS 上更可靠），失败退手势
+            var tapped = false
+            try {
+                if (com.careshield.app.shizuku.ShizukuManager.isEnhanceReady()) {
+                    com.careshield.app.shizuku.ShizukuManager.execShell("input tap $x $y")
+                    tapped = true
+                }
+            } catch (_: Exception) { }
+            if (!tapped) {
+                try {
+                    val path = Path().apply { moveTo(x.toFloat(), y.toFloat()); lineTo(x.toFloat() + 1, y.toFloat() + 1) }
+                    val g = GestureDescription.Builder()
+                        .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
+                        .build()
+                    tapped = dispatchGesture(g, null, null)
+                } catch (_: Exception) { }
+            }
+            android.util.Log.i("CareShield", "自定义规则命中[坐标] $pkg ($x,$y) ok=$tapped")
+            if (tapped) logAsync(repo, "广告(自定义)", "$pkg · ($x,$y)")
+            return tapped
+        }
+        return false
+    }
+
+    private fun logAsync(repo: SettingsRepo, source: String, action: String) {
+        Thread { kotlinx.coroutines.runBlocking { repo.logIntercept(source, action) } }.start()
+    }
+
+    @Volatile private var lastAppRuleTap = 0L
 
     /**
      * 防误触下载：检测到"下载/安装/应用商店/立即下载"等误触下载界面时，自动返回退回。
@@ -407,6 +512,22 @@ class AdBlockerService : AccessibilityService() {
             if (!ok) {
                 val anc = findClickableAncestor(node)
                 if (anc != null && anc !== node) ok = anc.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            // 升级链最后一环：ACTION_CLICK 仍失败 → 手势点击节点中心
+            // （部分广告 SDK 对无障碍点击返回 false 或静默忽略，手势是真实触摸）
+            if (!ok) {
+                val b = android.graphics.Rect()
+                try { node.getBoundsInScreen(b) } catch (_: Exception) { b.setEmpty() }
+                if (!b.isEmpty) {
+                    val cx = b.centerX.toFloat()
+                    val cy = b.centerY.toFloat()
+                    val path = Path().apply { moveTo(cx, cy); lineTo(cx + 1, cy + 1) }
+                    val g = GestureDescription.Builder()
+                        .addStroke(GestureDescription.StrokeDescription(path, 0, 50))
+                        .build()
+                    ok = dispatchGesture(g, null, null)
+                    android.util.Log.i("CareShield", "手势兜底点击 ($cx,$cy) ok=$ok")
+                }
             }
             if (ok) {
                 // 记录时带应用作用域（在哪个 app 里拦截）
