@@ -13,6 +13,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Release 步骤需要 GITHUB_TOKEN 有 contents 写权限
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
