@@ -12,8 +12,8 @@ android {
         applicationId = "com.careshield.app"
         minSdk = 26            // 无障碍服务稳定 & AGSL(RenderEffect 需 31+，shader 在 31 才生效)
         targetSdk = 34
-        versionCode = 60
-        versionName = "1.6.0"
+        versionCode = 61
+        versionName = "1.6.1"
         vectorDrawables { useSupportLibrary = true }
         resourceConfigurations += listOf("zh-rTW", "en")
     }
