@@ -31,7 +31,7 @@ jobs:
       - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.13'
 
       # 直接编译 Debug APK（不签名，可直接安装）；输出落盘供失败时提取错误行
       - name: Build debug APK
