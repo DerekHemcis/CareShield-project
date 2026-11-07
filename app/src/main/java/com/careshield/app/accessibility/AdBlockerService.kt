@@ -519,8 +519,8 @@ class AdBlockerService : AccessibilityService() {
                 val b = android.graphics.Rect()
                 try { node.getBoundsInScreen(b) } catch (_: Exception) { b.setEmpty() }
                 if (!b.isEmpty) {
-                    val cx = b.centerX.toFloat()
-                    val cy = b.centerY.toFloat()
+                    val cx = b.centerX().toFloat()
+                    val cy = b.centerY().toFloat()
                     val path = Path().apply { moveTo(cx, cy); lineTo(cx + 1, cy + 1) }
                     val g = GestureDescription.Builder()
                         .addStroke(GestureDescription.StrokeDescription(path, 0, 50))
