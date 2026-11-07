@@ -62,8 +62,9 @@ dependencies {
     implementation("dev.rikka.shizuku:provider:13.1.5")
 
     // 液态玻璃（Kyant0/AndroidLiquidGlass，Compose Backdrop）
-    implementation("io.github.kyant0:backdrop:2.0.1")
-    implementation("io.github.kyant0:shapes:1.2.1")
+    // 2.0.x 强制 compileSdk 37，1.0.6 API 相同且兼容 compileSdk 34
+    implementation("io.github.kyant0:backdrop:1.0.6")
+    implementation("io.github.kyant0:shapes:1.2.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 
