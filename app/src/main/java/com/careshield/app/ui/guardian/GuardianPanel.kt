@@ -35,10 +35,12 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
     var showWhitelist by remember { mutableStateOf(false) }
     var showChangePass by remember { mutableStateOf(false) }
     var showShizukuGuide by remember { mutableStateOf(false) }
+    var showAppRules by remember { mutableStateOf(false) }
 
     if (showWhitelist) { WhitelistScreen(onBack = { showWhitelist = false }); return }
     if (showChangePass) { ChangePassScreen(onBack = { showChangePass = false }); return }
     if (showShizukuGuide) { com.careshield.app.ui.shizuku.ShizukuGuideScreen(onBack = { showShizukuGuide = false }); return }
+    if (showAppRules) { AppRulesScreen(onBack = { showAppRules = false }); return }
 
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -71,6 +73,8 @@ fun GuardianPanelScreen(onBack: () -> Unit) {
             GuardianNavRow("修改监护人密码", "默认 1234，可自定义", { showChangePass = true })
             // Shizuku 设置（打开图形引导向导）
             GuardianNavRow("Shizuku 设置", "引导开启 · 图形化步骤", { showShizukuGuide = true })
+            // 每App自定义跳过规则（针对腾讯视频等图片式开屏广告）
+            GuardianNavRow("自定义跳过规则", "给个别App标定「跳过」按钮位置", { showAppRules = true })
             Spacer(Modifier.height(24.dp))
         }
     }
