@@ -40,18 +40,20 @@ jobs:
           set -o pipefail
           gradle assembleDebug --no-daemon 2>&1 | tee build_out.txt
 
-      # 编译失败时把每行错误以 annotation 形式标注（注解在 run 页匿名可见）
+      # 编译失败时把错误段落以 annotation 形式标注（注解在 run 页匿名可见）
       - name: Surface compile errors
         if: failure()
         shell: bash
         run: |
-          grep -E "^e: |error:|FAILURE: Build" build_out.txt | head -20 > errs.txt
-          wc -l errs.txt
+          # What went wrong 段落 + Kotlin 错误 + 因果链
+          awk '/FAILURE: Build/{f=1} f' build_out.txt | head -60 > errs.txt
+          grep -E "^e: |error:|Caused by" build_out.txt >> errs.txt || true
+          sort -u errs.txt | head -25 > errs2.txt
+          wc -l errs2.txt
           while IFS= read -r line; do
             echo "::error::${line:0:250}"
-          done < errs.txt
-          # 也输出到本步骤 stdout 双保险
-          cat errs.txt
+          done < errs2.txt
+          cat errs2.txt
           exit 0
 
       # 上传 APK 为 Artifact（Actions 运行页面下载，需登录）
