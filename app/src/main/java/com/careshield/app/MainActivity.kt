@@ -41,17 +41,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             val scope = rememberCoroutineScope()
             var theme by remember { mutableStateOf(0) }
+            var uiStyle by remember { mutableStateOf(com.careshield.app.ui.UiStyle.COUI) }
             val repo = SettingsRepo(this)
             LaunchedEffect(Unit) {
                 theme = repo.get("theme", "0").toIntOrNull() ?: 0
+                uiStyle = com.careshield.app.ui.UiStyle.from(repo.get("ui_style", "coui"))
             }
-            CareShieldTheme(theme) {
+            CareShieldTheme(theme, uiStyle) {
                 MainShell(
                     theme = theme,
                     onThemeChange = { t -> theme = t; scope.launch { repo.put("theme", t.toString()) } },
                     onOpenAccessibility = { openAccessibility(this@MainActivity) },
                     onOpenShizuku = { connectShizuku() },
-                    shizukuState = shizukuState.value
+                    shizukuState = shizukuState.value,
+                    onStyleChange = { s -> uiStyle = s; scope.launch { repo.put("ui_style", s.key) } }
                 )
             }
         }
