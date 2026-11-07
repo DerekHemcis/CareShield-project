@@ -21,7 +21,11 @@ import com.careshield.app.ui.guardian.GuardianPanelScreen
 import kotlinx.coroutines.runBlocking
 
 @Composable
-fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
+fun SettingsScreen(
+    theme: Int,
+    onThemeChange: (Int) -> Unit,
+    onStyleChange: (com.careshield.app.ui.UiStyle) -> Unit = {}
+) {
     val context = LocalContext.current
     val repo = SettingsRepo(context)
     var showGuardianDialog by remember { mutableStateOf(false) }
@@ -30,12 +34,17 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
     // 语言 / 主题选择器状态
     var showLangDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showStyleDialog by remember { mutableStateOf(false) }
     var showApiKeyDialog by remember { mutableStateOf(false) }
     // 恢复默认后强制刷新界面（key 重建触发各开关重新读取默认值）
     var resetCounter by remember { mutableStateOf(0) }
     // 语言：从 DataStore 读取实际值，恢复默认(resetCounter变化)时重新读取
     var langLabel by remember(resetCounter) {
         mutableStateOf(runBlocking { repo.get("lang", "简体中文") })
+    }
+    // 界面风格（COUI / Material3）
+    var uiStyle by remember(resetCounter) {
+        mutableStateOf(com.careshield.app.ui.UiStyle.from(runBlocking { repo.get("ui_style", "coui") }))
     }
 
     if (showGuardianPanel) {
@@ -108,6 +117,8 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
         SectionTitle("通用")
         // 语言：点击弹选择器
         SettingRow("语言", langLabel) { showLangDialog = true }
+        // 界面风格：COUI（ColorOS 风·液态玻璃导航）/ Material3
+        SettingRow("界面风格", uiStyle.label) { showStyleDialog = true }
         // 主题：点击弹选择器
         val themeMap = listOf("跟随系统", "浅色", "深色")
         SettingRow("主题设置", themeMap.getOrElse(theme) { "跟随系统" }) { showThemeDialog = true }
@@ -158,6 +169,32 @@ fun SettingsScreen(theme: Int, onThemeChange: (Int) -> Unit) {
                     LangOption("简体中文", langLabel == "简体中文") { langLabel = "简体中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "简体中文") }; showLangDialog = false; (context as? android.app.Activity)?.recreate() }
                     LangOption("繁體中文", langLabel == "繁體中文") { langLabel = "繁體中文"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "繁體中文") }; showLangDialog = false; (context as? android.app.Activity)?.recreate() }
                     LangOption("English", langLabel == "English") { langLabel = "English"; runBlocking { com.careshield.app.ui.locale.AppLocaleManager.setLocale(context, "English") }; showLangDialog = false; (context as? android.app.Activity)?.recreate() }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
+
+    // 界面风格选择器
+    if (showStyleDialog) {
+        AlertDialog(
+            onDismissRequest = { showStyleDialog = false },
+            title = { Text(T("选择界面风格")) },
+            text = {
+                Column {
+                    com.careshield.app.ui.UiStyle.entries.forEach { s ->
+                        StyleOption(
+                            label = s.label,
+                            desc = if (s == com.careshield.app.ui.UiStyle.COUI) "ColorOS 风格 · 液态玻璃导航" else "经典 Material3 风格",
+                            selected = uiStyle == s
+                        ) {
+                            uiStyle = s
+                            runBlocking { repo.put("ui_style", s.key) }
+                            onStyleChange(s)
+                            showStyleDialog = false
+                        }
+                    }
                 }
             },
             confirmButton = {},
@@ -278,4 +315,18 @@ internal fun SwitchRow(title: String, desc: String, checked: Boolean, onChange: 
 
 private fun toast(context: android.content.Context, msg: String) {
     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+}
+
+@Composable
+private fun StyleOption(label: String, desc: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable { onSelect() }.padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, fontSize = 15.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
+            Text(desc, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (selected) Text("✓", color = MaterialTheme.colorScheme.primary)
+    }
 }

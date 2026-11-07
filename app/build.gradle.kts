@@ -61,6 +61,10 @@ dependencies {
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
 
+    // 液态玻璃（Kyant0/AndroidLiquidGlass，Compose Backdrop）
+    implementation("io.github.kyant0:backdrop:2.0.1")
+    implementation("io.github.kyant0:shapes:1.2.1")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // JVM 单测（规则匹配逻辑）
