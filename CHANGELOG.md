@@ -1,5 +1,27 @@
 # CareShield 更新日志
 
+## v1.7.0 (构建 070 — 2026-11-07)
+
+### COUI 主题 + 液态玻璃底部导航 + 双风格切换
+- **界面风格切换**（设置 → 通用 → 界面风格）：
+  - **COUI**（ColorOS 风格，默认）：OPPO 品牌绿、近白底/深灰底、大圆角(20~28dp)
+  - **Material3**：原 KernelSU 绿风格，标准 NavigationBar
+  - 持久化到 ui_style，重启保留
+- **液态玻璃底部导航**（COUI 风格下，Kyant0/AndroidLiquidGlass backdrop 库实现）：
+  - Capsule 玻璃面板：vibrancy + blur(8dp) + lens(24dp 折射)
+  - 选中胶囊 spring 滑动 + 按压时 lens 色散(chromaticAberration) + 高光/阴影渐进
+  - 内容层画入 layerBackdrop 供玻璃实时采样，滚动时折射内容跟随
+  - API < 31 自动跳过 shader 效果（库内部回退），功能不受影响
+- **构建工具链升级**（库依赖链要求）：
+  - AGP 8.5.2 → 8.9.3，Gradle 8.9 → 8.13，compileSdk 34 → 36
+  - Kotlin 2.0.20 → 2.3.10（backdrop 1.0.6 元数据要求），迁移 compilerOptions DSL
+  - backdrop 1.0.6 + shapes 1.2.0（2.0.x 强制 compileSdk 37，暂不采用）
+
+### 版本
+- versionCode 70 / versionName 1.7.0
+
+---
+
 ## v1.6.1 (构建 061 — 2026-11-07)
 
 ### 复合关键词匹配 + 点击升级链 + 每App自定义跳过规则
