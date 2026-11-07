@@ -45,8 +45,8 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          # What went wrong 段落 + Kotlin 错误 + 因果链
-          awk '/FAILURE: Build/{f=1} f' build_out.txt | head -60 > errs.txt
+          # What went wrong 正文 + Kotlin 错误 + 因果链
+          awk '/What went wrong:/{f=1;next} /^\* Try:/{f=0} f' build_out.txt | grep -v "^\s*$" | head -20 > errs.txt
           grep -E "^e: |error:|Caused by" build_out.txt >> errs.txt || true
           sort -u errs.txt | head -25 > errs2.txt
           wc -l errs2.txt
